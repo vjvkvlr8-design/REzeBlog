@@ -8,16 +8,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <>
-      {/* Skip to main content link */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-discord-brand text-white px-4 py-2 rounded-lg font-medium"
-      >
-        메인 콘텐츠로 건너뛰기
-      </a>
-      
-      <main id="main-content" className="min-h-screen bg-discord-1000" role="main" aria-label="REzeBlog 메인 페이지">
+    <div className="min-h-screen bg-discord-1000" role="main" aria-label="REzeBlog 메인 페이지">
       {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
         <div className="max-w-4xl mx-auto text-center">
@@ -124,13 +115,26 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Game Preview Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-discord-1100">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-discord-100 mb-4">🎮 지금 바로 플레이</h2>
+          <p className="text-discord-400 mb-8">텍스트 기반 인터랙티브 스토리를 직접 체험해보세요</p>
+          <div className="discord-card p-6 max-w-xl mx-auto">
+            <p className="game-text text-discord-100 mb-4">주변은 온통 어둠입니다...</p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/game" className="discord-button">게임 시작</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-discord-1100 border-t border-discord-800" role="contentinfo">
         <div className="max-w-6xl mx-auto text-center text-discord-500">
           <p>© 2026 REzeBlog. All rights reserved.</p>
         </div>
       </footer>
-    </main>
-    </>
+    </div>
   )
 }

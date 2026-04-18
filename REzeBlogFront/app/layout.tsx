@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
+import { Header } from '@/components/header'
+import { Sidebar } from '@/components/sidebar'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -52,8 +54,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" className="dark">
-      <body className={`${inter.variable} ${notoSansKR.variable} font-sans`}>
-        {children}
+      <body className={`${inter.variable} ${notoSansKR.variable} font-sans bg-discord-1000`}>
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+        </div>
       </body>
     </html>
   )
