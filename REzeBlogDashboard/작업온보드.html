@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REzeBlogDashboard - 작업 온보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            background: #9b59b6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #9b59b6;
+            font-size: 20px;
+        }
+        .card h3 {
+            color: #34495e;
+            margin: 20px 0 15px 0;
+            font-size: 16px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-waiting {
+            background: #e74c3c;
+            color: white;
+        }
+        .status-progress {
+            background: #f39c12;
+            color: white;
+        }
+        .status-complete {
+            background: #27ae60;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #34495e;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .template-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .copy-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+        .update-time {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="file:///C:/REzeBlog/WIKI.HTML" class="back-link">← 전체 대시보드로</a>
+        <h1>REzeBlogDashboard 작업 온보드</h1>
+        <p>관리자 대시보드 개발 작업 기록</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>모듈 정보 <span class="status-badge status-waiting">대기중</span></h2>
+            <table>
+                <tr>
+                    <th>항목</th>
+                    <th>내용</th>
+                </tr>
+                <tr>
+                    <td>모듈명</td>
+                    <td>REzeBlogDashboard</td>
+                </tr>
+                <tr>
+                    <td>역할</td>
+                    <td>관리자 대시보드</td>
+                </tr>
+                <tr>
+                    <td>현재 상태</td>
+                    <td>템플릿만 존재, 개발 대기중</td>
+                </tr>
+                <tr>
+                    <td>기술 스택</td>
+                    <td>미정 (작업 시작 시 결정)</td>
+                </tr>
+                <tr>
+                    <td>경로</td>
+                    <td>C:\REzeBlog\Main\REzeBlogDashboard\</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>작업 기록</h2>
+            <div class="info-box">
+                <strong>작업 기록 방법:</strong> 아래 표에 새로운 작업을 추가하세요.
+            </div>
+            <table>
+                <tr>
+                    <th>작업일자</th>
+                    <th>작업자</th>
+                    <th>작업내용</th>
+                    <th>상태</th>
+                </tr>
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>작업 기록 없음</td>
+                    <td>-</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>할 일 목록 (TODO)</h2>
+            <table>
+                <tr>
+                    <th>우선순위</th>
+                    <th>작업 항목</th>
+                    <th>예상 소요시간</th>
+                    <th>상태</th>
+                </tr>
+                <tr>
+                    <td>높음</td>
+                    <td>프로젝트 정체성 검토</td>
+                    <td>30분</td>
+                    <td>대기중</td>
+                </tr>
+                <tr>
+                    <td>높음</td>
+                    <td>대시보드 기능 요구사항 정의</td>
+                    <td>2시간</td>
+                    <td>대기중</td>
+                </tr>
+                <tr>
+                    <td>중간</td>
+                    <td>기본 레이아웃 설계</td>
+                    <td>2시간</td>
+                    <td>대기중</td>
+                </tr>
+                <tr>
+                    <td>중간</td>
+                    <td>게시글 관리 기능</td>
+                    <td>4시간</td>
+                    <td>대기중</td>
+                </tr>
+                <tr>
+                    <td>중간</td>
+                    <td>사용자 관리 기능</td>
+                    <td>3시간</td>
+                    <td>대기중</td>
+                </tr>
+                <tr>
+                    <td>낮음</td>
+                    <td>통계/분석 대시보드</td>
+                    <td>4시간</td>
+                    <td>대기중</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>의사결정 기록</h2>
+            <table>
+                <tr>
+                    <th>날짜</th>
+                    <th>결정사항</th>
+                    <th>이유</th>
+                    <th>결정자</th>
+                </tr>
+                <tr>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>작업 기록 템플릿</h2>
+            <div class="template-box" id="template">
+&lt;tr&gt;
+    &lt;td&gt;2026-04-18&lt;/td&gt;
+    &lt;td&gt;작업자명&lt;/td&gt;
+    &lt;td&gt;작업 내용 상세 설명&lt;/td&gt;
+    &lt;td&gt;완료/진행중/대기중&lt;/td&gt;
+&lt;/tr&gt;</div>
+            <button class="copy-btn" onclick="copyTemplate()">템플릿 복사</button>
+        </div>
+
+        <div class="card">
+            <h2>AI 에이전트 작업 지침</h2>
+            <ol style="margin-left: 20px; line-height: 2;">
+                <li>시작 전 반드시 <strong>C:\REzeBlog\정체성.txt</strong> 읽기</li>
+                <li><strong>file:///C:/REzeBlog/WIKI.HTML</strong>에서 전체 시스템 파악</li>
+                <li>본 파일(작업온보드.html) 확인하여 현재 상태 파악</li>
+                <li>작업 완료 후 <strong>개발기획 수정.txt</strong>에 작업 기록</li>
+                <li>본 파일의 작업 기록 테이블 업데이트</li>
+                <li>모든 작업은 정체성.txt 규칙에 따라 수행</li>
+            </ol>
+            <div class="warning-box">
+                <strong>중요:</strong> 새로운 파일/아키텍처 생성 시 사용자 승인이 필요합니다.
+            </div>
+        </div>
+
+        <div class="update-time">
+            마지막 업데이트: 2026-04-18 (생성됨)
+        </div>
+    </div>
+
+    <script>
+        function copyTemplate() {
+            const template = document.getElementById('template').innerText;
+            navigator.clipboard.writeText(template).then(() => {
+                alert('템플릿이 복사되었습니다.');
+            }).catch(err => {
+                console.error('복사 실패:', err);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+# REzeBlog 개발 환경 Docker Compose
+# 작성일: 2026-04-18
+# 사용법: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  db:
+    image: postgres:15-alpine
+    container_name: rezeblog-db
+    environment:
+      POSTGRES_USER: rezeblog
+      POSTGRES_PASSWORD: rezeblog123
+      POSTGRES_DB: rezeblog
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./REzeBlogDB/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./REzeBlogDB/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+    networks:
+      - rezeblog-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rezeblog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./REzeBlogFront
+      dockerfile: Dockerfile.dev
+    container_name: rezeblog-front
+    environment:
+      DATABASE_URL: postgresql://rezeblog:rezeblog123@db:5432/rezeblog
+      NODE_ENV: development
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./REzeBlogFront:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rezeblog-network
+    command: npm run dev
+
+  # Redis (세션 캐시용 - 선택사항)
+  redis:
+    image: redis:7-alpine
+    container_name: rezeblog-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - rezeblog-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  rezeblog-network:
+    driver: bridge

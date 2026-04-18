@@ -1,0 +1,18 @@
+# REzeBlog Dashboard 개발 환경 Dockerfile
+# 작성일: 2026-04-18
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 개발 환경 설정
+ENV NODE_ENV=development
+ENV PORT=3001
+
+# package.json 복사 및 설치
+COPY package*.json ./
+RUN npm install
+
+# 소스 코드는 docker-compose에서 volume으로 마운트
+# 개발 서버 실행
+CMD ["npm", "run", "dev"]

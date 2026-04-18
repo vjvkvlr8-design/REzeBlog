@@ -1,0 +1,30 @@
+# Docker Compose 프로덕션 환경
+# 작성일: 2026-04-18
+# 사용법: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./REzeBlogFront
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+
+  # 프로덕션용 Nginx 리버스 프록시
+  nginx:
+    image: nginx:alpine
+    container_name: rezeblog-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+    networks:
+      - rezeblog-network
+    restart: always

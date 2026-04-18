@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: 'Inter', sans-serif;
+  --font-noto-sans-kr: 'Noto Sans KR', sans-serif;
+}
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply bg-discord-1000 text-discord-100 antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+  
+  /* Discord Dark Theme Colors */
+  .bg-discord-100 { background-color: #f2f3f5; }
+  .bg-discord-200 { background-color: #e3e5e8; }
+  .bg-discord-300 { background-color: #d4d7dc; }
+  .bg-discord-400 { background-color: #a3a6aa; }
+  .bg-discord-500 { background-color: #8e9297; }
+  .bg-discord-600 { background-color: #72767d; }
+  .bg-discord-700 { background-color: #5c6067; }
+  .bg-discord-800 { background-color: #40444b; }
+  .bg-discord-900 { background-color: #36393f; }
+  .bg-discord-950 { background-color: #2f3136; }
+  .bg-discord-1000 { background-color: #202225; }
+  .bg-discord-1100 { background-color: #18191c; }
+  .bg-discord-1200 { background-color: #141517; }
+  
+  .text-discord-100 { color: #f2f3f5; }
+  .text-discord-200 { color: #e3e5e8; }
+  .text-discord-300 { color: #d4d7dc; }
+  .text-discord-400 { color: #a3a6aa; }
+  .text-discord-500 { color: #8e9297; }
+  .text-discord-600 { color: #72767d; }
+  .text-discord-brand { color: #5865F2; }
+}
+
+@layer components {
+  .discord-card {
+    @apply bg-discord-950 rounded-lg border border-discord-800 shadow-lg;
+  }
+  
+  .discord-button {
+    @apply bg-discord-brand hover:bg-opacity-90 text-white font-medium 
+           py-2 px-4 rounded-md transition-all duration-200 
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .discord-button-secondary {
+    @apply bg-discord-800 hover:bg-discord-700 text-discord-100 
+           font-medium py-2 px-4 rounded-md transition-all duration-200
+           active:scale-95;
+  }
+  
+  .discord-input {
+    @apply bg-discord-900 border border-discord-800 rounded-md 
+           px-4 py-2 text-discord-100 placeholder-discord-500
+           focus:outline-none focus:border-discord-brand focus:ring-1 focus:ring-discord-brand;
+  }
+  
+  .game-text {
+    @apply font-mono text-lg leading-relaxed tracking-wide;
+  }
+  
+  .choice-button {
+    @apply w-full text-left p-4 rounded-lg border-2 border-discord-800 
+           bg-discord-950 hover:bg-discord-900 hover:border-discord-brand
+           transition-all duration-300 cursor-pointer
+           active:scale-[0.98];
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2f3136;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #202225;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5865F2;
+}
+
+/* Selection Styling */
+::selection {
+  background: rgba(88, 101, 242, 0.3);
+  color: #f2f3f5;
+}

@@ -1,0 +1,17 @@
+#!/bin/sh
+# Git pre-commit hook for automatic lint correction route.
+# 성공 시 출력 최소화. 실패 시 에러 메시지와 함께 종료.
+
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit run --all-files
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo ""
+    echo "❌ Lint failure: pre-commit hook failed. Agent self-correct required."
+    exit $status
+  fi
+  exit 0
+else
+  echo "[ERROR] pre-commit is not installed. Run: pip install pre-commit"
+  exit 1
+fi

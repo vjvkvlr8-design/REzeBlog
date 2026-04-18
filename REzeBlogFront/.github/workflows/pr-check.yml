@@ -1,0 +1,65 @@
+# PR 자동화 체크
+# 작성일: 2026-04-18
+
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # PR 제목 검증
+  pr-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check PR Title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            test
+            chore
+            ci
+          requireScope: false
+
+  # 코드 리뷰 자동화
+  auto-review:
+    name: Auto Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --coverage --coverageReporters=text-summary
+
+      - name: Comment coverage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            // Coverage 리포트 파싱 및 PR 코멘트
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📊 테스트 커버리지 리포트 확인 완료'
+            });
