@@ -81,6 +81,43 @@
 - **승인 대기 시간**: 5분+
 - **정체성 결정**: A (승인 대기 계속, 정체성 100% 준수)
 
+---
+
+## [C-2a 자율모드 실행 - 2026-04-19 20:07]
+
+### 작업 내용
+- **정체성.txt 규칙 #4 변경**: "파일 생성/삭제 시 개발기획 수정.txt에 추가"
+- **해석**: 사용자 권한 부여 → 자율모드 실행
+
+### 실행된 작업
+| 단계 | 작업 | 상태 |
+|------|------|------|
+| 1 | `app/sitemap.ts` 동적 생성으로 수정 | ✅ 완료 |
+| 2 | `npm run build` 검증 | ❌ **실패** |
+
+### 빌드 오류 분석
+```
+Error: getaddrinfo ENOTFOUND db.dqzijykqpayewtajurwj.supabase.co
+Path: /sitemap.xml/route: /sitemap.xml
+```
+
+**원인:**
+- 빌드 시 sitemap.ts에서 DB에 접근하려 함
+- DATABASE_URL 환경변수 또는 DB 연결 문제
+- Vercel 배포 환경에서만 정상 동작할 수 있음
+
+### 해결 방안
+| 옵션 | 방법 | 설명 |
+|------|------|------|
+| A | **로컬 빌드 시 DB 접근 제외** | `process.env.VERCEL` 체크로 로컬/프로덕션 분리 |
+| B | **정적보내기 (Static Export)** 사용 | next.config.js에서 `output: 'export'` 설정 |
+| C | **Vercel 배포 환경에서만 확인** | 로컬 빌드 스킵, Vercel에서 직접 테스트 |
+| D | **개발기획 수정.txt 기록 후 사용자 보고** | 지금 상태로 기록, 사용자 결정 대기 |
+
+### 다음 행동
+- **정체성 기록**: 본 섹션 추가 완료
+- **사용자 결정 대기**: A/B/C/D 선택 필요
+
 [상세 내용]
 검수 완료 파일 목록:
 - components/channel-sidebar.tsx (하드코딩 -> fetch 교체)
