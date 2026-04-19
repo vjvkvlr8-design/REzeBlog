@@ -21,37 +21,45 @@ interface Analytics {
   recentVisitors: { id: string; ip: string; country: string; referrer: string; pages: string[]; time: string; duration: string }[]
 }
 
-// 채널 관리 데이터 (하드코딩, DB 연동 예정)
-const channelsData = [
-  { id: 1, category: '환영', name: '환영합니다', postCount: 0 },
-  { id: 2, category: '환영', name: '블로그-소개', postCount: 0 },
-  { id: 3, category: '환영', name: '공지사항', postCount: 1 },
-  { id: 4, category: '개발', name: 'nextjs-개발팁', postCount: 2 },
-  { id: 5, category: '개발', name: '풀스택-가이드', postCount: 1 },
-  { id: 6, category: '개발', name: '인디게임-개발', postCount: 1 },
-  { id: 7, category: '인터랙티브 스토리', name: '스토리텔링-가이드', postCount: 1 },
-  { id: 8, category: '인터랙티브 스토리', name: '텍스트게임-개발', postCount: 1 },
-  { id: 9, category: '자유게시판', name: '일반', postCount: 5 },
-]
+// 채널 데이터 타입
+interface Channel {
+  id: number
+  name: string
+  slug: string
+  categoryId: number | null
+  categoryName: string | null
+  order: number
+  postCount?: number
+}
 
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [channels, setChannels] = useState<Channel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
 
   useEffect(() => {
-    fetch('/api/admin/analytics')
-      .then(res => {
-        if (res.status === 401) {
+    // Fetch both analytics and channels
+    Promise.all([
+      fetch('/api/admin/analytics'),
+      fetch('/api/admin/channels')
+    ])
+      .then(async ([analyticsRes, channelsRes]) => {
+        if (analyticsRes.status === 401 || channelsRes.status === 401) {
           router.push('/admin/login')
           return null
         }
-        return res.json()
+        const analyticsData = await analyticsRes.json()
+        const channelsData = await channelsRes.json()
+        return { analytics: analyticsData, channels: channelsData }
       })
       .then(data => {
-        if (data) setAnalytics(data)
+        if (data) {
+          setAnalytics(data.analytics)
+          setChannels(data.channels)
+        }
         setLoading(false)
       })
       .catch(() => {
@@ -218,15 +226,15 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {channelsData.map(ch => (
+                  {channels.map((ch: Channel) => (
                     <tr key={ch.id} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                      <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--dc-text-muted)' }}>▼ {ch.category}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--dc-text-muted)' }}>▼ {ch.categoryName || '미분류'}</td>
                       <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>
                         <span style={{ color: 'var(--dc-channel-icon)', marginRight: 4 }}>#</span>{ch.name}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 14, textAlign: 'center' }}>
-                        <span style={{ background: ch.postCount > 0 ? 'var(--dc-brand)' : 'var(--dc-interactive-muted)', color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 12 }}>
-                          {ch.postCount}
+                        <span style={{ background: (ch.postCount || 0) > 0 ? 'var(--dc-brand)' : 'var(--dc-interactive-muted)', color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 12 }}>
+                          {ch.postCount || 0}
                         </span>
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
