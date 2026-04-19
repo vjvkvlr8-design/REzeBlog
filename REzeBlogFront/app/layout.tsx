@@ -5,6 +5,7 @@ import { ServerSidebar } from '@/components/server-sidebar'
 import { ChannelSidebar } from '@/components/channel-sidebar'
 import { ThreadPanel } from '@/components/thread-panel'
 import { GameWidget } from '@/components/game-widget'
+import { VisitorTracker } from '@/components/visitor-tracker'
 import { Suspense } from 'react'
 
 const inter = Inter({ 
@@ -73,6 +74,8 @@ export default function RootLayout({
         </div>
         {/* Floating game widget */}
         <GameWidget />
+        {/* Visitor tracking */}
+        <VisitorTracker />
       </body>
     </html>
   )

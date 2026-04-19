@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 interface ThreadItem {
@@ -18,47 +18,28 @@ interface ThreadItem {
   lastActivity: string
 }
 
-// 하드코딩 데이터 (DB 연동 예정)
-const threads: ThreadItem[] = [
-  {
-    slug: 'interactive-storytelling-guide',
-    title: '인터랙티브 스토리텔링 완벽 가이드',
-    author: '스토리텔러', authorColor: '#9b59b6',
-    avatarLetter: 'S', avatarBg: 'purple',
-    replyCount: 2, lastActivity: '1시간 전',
-  },
-  {
-    slug: 'nextjs-fullstack-blog',
-    title: 'Next.js 14로 1인 개발 블로그 만들기',
-    author: '개발자', authorColor: '#3ba55d',
-    avatarLetter: 'D', avatarBg: 'green',
-    replyCount: 1, lastActivity: '3시간 전',
-  },
-  {
-    slug: 'text-game-development',
-    title: '텍스트 게임 개발 입문',
-    author: '튜토리얼봇', authorColor: '#faa81a',
-    avatarLetter: 'T', avatarBg: 'orange',
-    replyCount: 0, lastActivity: '5시간 전',
-  },
-  {
-    slug: 'indie-game-development-guide',
-    title: '인디 게임 개발 완벽 가이드',
-    author: '개발자', authorColor: '#3ba55d',
-    avatarLetter: 'D', avatarBg: 'green',
-    replyCount: 0, lastActivity: '어제',
-  },
-  {
-    slug: 'story-based-games-guide',
-    title: '스토리 기반 게임 제작: 서사 설계',
-    author: '스토리텔러', authorColor: '#9b59b6',
-    avatarLetter: 'S', avatarBg: 'purple',
-    replyCount: 1, lastActivity: '어제',
-  },
-]
-
 export function ThreadPanel() {
   const [isOpen, setIsOpen] = useState(true)
+  const [threads, setThreads] = useState<ThreadItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const res = await fetch('/api/posts')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        setThreads(data)
+      } catch (err) {
+        console.error('Failed to fetch posts:', err)
+        setThreads([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPosts()
+  }, [])
 
   if (!isOpen) {
     return (
@@ -114,10 +95,14 @@ export function ThreadPanel() {
           textTransform: 'uppercase' as const, letterSpacing: '0.02em',
           color: 'var(--dc-channels-default)',
         }}>
-          전체 게시글 — {threads.length}
+          {loading ? '게시글 로딩 중...' : `전체 게시글 — ${threads.length}`}
         </div>
 
-        {threads.map((thread) => (
+        {loading ? (
+          <div style={{ padding: 20, textAlign: 'center', color: 'var(--dc-text-muted)' }}>
+            로딩 중...
+          </div>
+        ) : threads.map((thread) => (
           <Link
             key={thread.slug}
             href={`/blog/${thread.slug}`}

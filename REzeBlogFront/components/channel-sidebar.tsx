@@ -7,7 +7,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Channel {
   slug: string
@@ -21,45 +21,42 @@ interface Category {
   channels: Channel[]
 }
 
-const categories: Category[] = [
-  {
-    name: '환영',
-    channels: [
-      { slug: 'welcome', name: '환영합니다' },
-      { slug: 'about', name: '블로그-소개' },
-      { slug: 'announcements', name: '공지사항', badge: 1 },
-    ],
-  },
-  {
-    name: '개발',
-    channels: [
-      { slug: 'nextjs-tips', name: 'nextjs-개발팁', unread: true },
-      { slug: 'fullstack-guide', name: '풀스택-가이드' },
-      { slug: 'indie-game-dev', name: '인디게임-개발' },
-    ],
-  },
-  {
-    name: '인터랙티브 스토리',
-    channels: [
-      { slug: 'interactive-storytelling', name: '스토리텔링-가이드' },
-      { slug: 'text-game-dev', name: '텍스트게임-개발' },
-      { slug: 'story-design', name: '서사-설계' },
-    ],
-  },
-  {
-    name: '자유게시판',
-    channels: [
-      { slug: 'general', name: '일반' },
-      { slug: 'showcase', name: '작품-공유' },
-    ],
-  },
-]
-
 export function ChannelSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const currentChannel = searchParams?.get('ch') || (pathname === '/' ? 'welcome' : '')
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch('/api/categories')
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        // Transform API response to match component interface
+        const transformed = data.map((cat: any) => ({
+          name: cat.name,
+          channels: cat.channels.map((ch: any) => ({
+            slug: ch.slug,
+            name: ch.name,
+            // Calculate unread/badge from posts data if available
+            badge: 0,
+          })),
+        }))
+        setCategories(transformed)
+      } catch (err) {
+        console.error('Failed to fetch categories:', err)
+        // Fallback to empty if API fails
+        setCategories([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   const toggleCategory = (name: string) => {
     setCollapsed(prev => ({ ...prev, [name]: !prev[name] }))
@@ -75,7 +72,12 @@ export function ChannelSidebar() {
 
       {/* Channel list */}
       <div className="channel-list">
-        {categories.map((cat) => (
+        {loading ? (
+          <div style={{ padding: 20, color: 'var(--dc-text-muted)', fontSize: 13, textAlign: 'center' }}>
+            채널 로딩 중...
+          </div>
+        ) : (
+          categories.map((cat) => (
           <div key={cat.name} className="channel-category">
             <div
               className="channel-category-name"
@@ -108,7 +110,7 @@ export function ChannelSidebar() {
               </Link>
             ))}
           </div>
-        ))}
+        )))}
       </div>
 
       {/* User area */}
