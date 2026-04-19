@@ -42,11 +42,11 @@ function isRateLimited(key: string, isAPI: boolean): boolean {
 // Clean up old entries every 5 minutes
 setInterval(() => {
   const now = Date.now()
-  for (const [key, value] of rateLimitMap.entries()) {
+  Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
     if (now > value.resetTime) {
       rateLimitMap.delete(key)
     }
-  }
+  })
 }, 5 * 60 * 1000)
 
 export function middleware(request: NextRequest) {

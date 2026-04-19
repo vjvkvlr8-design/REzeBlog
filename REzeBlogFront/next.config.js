@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
     domains: ['localhost'],
     formats: ['image/webp', 'image/avif'],
@@ -22,7 +19,6 @@ const nextConfig = {
   
   // 실험적 기능 (성능)
   experimental: {
-    appDir: true,
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
 }
