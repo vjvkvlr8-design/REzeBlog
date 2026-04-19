@@ -1,0 +1,13 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1776584996196,
+      "tag": "0000_wandering_talos",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,128 +1,90 @@
 // 블로그 페이지 = Discord 채널 채팅
 // 게시글은 디스코드 채팅 메시지, 댓글은 디스코드 답장
-// 작성일: 2026-04-19 (Antigravity)
+// 작성일: 2026-04-19 (Antigravity) - DB 연동 추가
 
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { db } from '@/lib/drizzle'
+import { posts, comments, reactions } from '@/db/schema'
+import { asc, eq } from 'drizzle-orm'
 
 export const metadata: Metadata = {
   title: '블로그 - 인터랙티브 스토리텔링과 개발 이야기 | REzeBlog',
   description: '텍스트 기반 인터랙티브 스토리, Next.js 14 개발 팁, 1인 개발자를 위한 실전 가이드.',
 }
 
-// 게시글(채팅 메시지) 데이터 (DB 연동 예정)
-const posts = [
-  {
-    id: '1',
-    slug: 'interactive-storytelling-guide',
-    title: '인터랙티브 스토리텔링 완벽 가이드: 독자가 주인공이 되는 이야기',
-    content: '텍스트 기반 인터랙티브 스토리텔링의 모든 것. 독자의 선택으로 변하는 이야기를 만드는 방법과 Next.js로 구현하는 기술적 팁을 소개합니다.\n\n스토리텔링의 핵심은 **선택**입니다. 독자가 주인공이 되어 직접 이야기의 방향을 결정하는 경험은 기존 블로그와는 차원이 다른 몰입감을 제공합니다.',
-    author: '스토리텔러',
-    authorColor: '#9b59b6',
-    avatarBg: 'purple',
-    avatarLetter: 'S',
-    date: '2026-04-19',
-    time: '오후 3:24',
-    reactions: [{ emoji: '📖', count: 12 }, { emoji: '🔥', count: 5 }, { emoji: '👍', count: 8 }],
-    replies: [
-      {
-        author: '방문자',
-        authorColor: '#1abc9c',
-        avatarBg: 'teal',
-        avatarLetter: 'V',
-        content: '정말 유용한 가이드네요! Twine으로 시작하는 팁이 특히 좋았습니다 👏',
-        time: '오후 4:01',
-      },
-      {
-        author: '개발자',
-        authorColor: '#3ba55d',
-        avatarBg: 'green',
-        avatarLetter: 'D',
-        content: 'Next.js App Router랑 같이 쓰면 SSR SEO도 잡을 수 있어서 좋네요',
-        time: '오후 5:15',
-      },
-    ],
-  },
-  {
-    id: '2',
-    slug: 'nextjs-fullstack-blog',
-    title: 'Next.js 14로 1인 개발 블로그 만들기: 풀스택 가이드',
-    content: '1인 개발자를 위한 Next.js 14 풀스택 블로그 만들기. App Router, Server Components, PostgreSQL 연동까지 실전 팁을 소개합니다.\n\nApp Router의 강점은 서버 컴포넌트 기본 지원입니다. 데이터 fetching이 컴포넌트 레벨에서 자연스럽게 이루어지고, 클라이언트 번들이 줄어듭니다.',
-    author: '개발자',
-    authorColor: '#3ba55d',
-    avatarBg: 'green',
-    avatarLetter: 'D',
-    date: '2026-04-19',
-    time: '오후 1:47',
-    reactions: [{ emoji: '💻', count: 15 }, { emoji: '🚀', count: 7 }],
-    replies: [
-      {
-        author: '방문자2',
-        authorColor: '#e91e63',
-        avatarBg: 'red',
-        avatarLetter: 'B',
-        content: 'PostgreSQL 연동 부분이 궁금했는데 자세히 설명해주셔서 감사합니다!',
-        time: '오후 2:30',
-      },
-    ],
-  },
-  {
-    id: '3',
-    slug: 'text-game-development',
-    title: '텍스트 게임 개발 입문: 코드 없이 시작하는 방법',
-    content: '프로그래밍 없이 텍스트 기반 게임을 만드는 방법. Twine, Ink, 그리고 Next.js로 진화하는 단계별 가이드.\n\nTwine은 브라우저에서 바로 실행되는 인터랙티브 픽션 에디터입니다. 프로그래밍 지식 없이도 분기형 스토리를 만들 수 있어 입문자에게 최적입니다.',
-    author: '튜토리얼봇',
-    authorColor: '#faa81a',
-    avatarBg: 'orange',
-    avatarLetter: 'T',
-    date: '2026-04-19',
-    time: '오전 11:30',
-    reactions: [{ emoji: '🎮', count: 9 }, { emoji: '📚', count: 4 }],
-    replies: [],
-  },
-  {
-    id: '4',
-    slug: 'indie-game-development-guide',
-    title: '인디 게임 개발 완벽 가이드: 1인 개발자의 성공 전략',
-    content: '1인 인디 게임 개발자를 위한 실전 가이드. 기획부터 출시까지, 텍스트 게임부터 시작하는 저비용 고효율 개발 전략을 소개합니다.',
-    author: '개발자',
-    authorColor: '#3ba55d',
-    avatarBg: 'green',
-    avatarLetter: 'D',
-    date: '2026-04-18',
-    time: '오후 9:12',
-    reactions: [{ emoji: '💪', count: 6 }, { emoji: '🎯', count: 3 }],
-    replies: [],
-  },
-  {
-    id: '5',
-    slug: 'story-based-games-guide',
-    title: '스토리 기반 게임 제작: 플레이어를 사로잡는 서사 설계',
-    content: '스토리 기반 게임의 핵심 원칙. 캐릭터, 플롯, 세계관을 설계하는 방법과 플레이어의 몰입을 극대화하는 기술적 팁을 소개합니다.',
-    author: '스토리텔러',
-    authorColor: '#9b59b6',
-    avatarBg: 'purple',
-    avatarLetter: 'S',
-    date: '2026-04-18',
-    time: '오후 6:45',
-    reactions: [{ emoji: '✍️', count: 8 }],
-    replies: [
-      {
-        author: '방문자',
-        authorColor: '#1abc9c',
-        avatarBg: 'teal',
-        avatarLetter: 'V',
-        content: '3막 구조를 게임에 적용하는 파트가 인상적이었습니다',
-        time: '오후 7:20',
-      },
-    ],
-  },
-]
+// Fetch posts from database
+async function getPosts() {
+  try {
+    const allPosts = await db.select().from(posts).where(eq(posts.published, true)).orderBy(asc(posts.createdAt))
+    const allComments = await db.select().from(comments)
+    const allReactions = await db.select().from(reactions)
+    
+    // Format posts with comments and reactions
+    return allPosts.map((post) => ({
+      id: String(post.id),
+      slug: post.slug,
+      title: post.title,
+      content: post.content,
+      author: post.author,
+      authorColor: post.authorColor,
+      avatarBg: post.avatarBg,
+      avatarLetter: post.avatarLetter,
+      date: post.createdAt.toISOString().split('T')[0],
+      time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      reactions: allReactions.filter((r) => r.postId === post.id).map((r) => ({ emoji: r.emoji, count: r.count })),
+      replies: allComments
+        .filter((c) => c.postId === post.id)
+        .map((c) => ({
+          author: c.author,
+          authorColor: c.authorColor,
+          avatarBg: c.avatarBg,
+          avatarLetter: c.avatarLetter,
+          content: c.content,
+          time: c.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        })),
+    }))
+  } catch (error) {
+    console.error('Failed to fetch posts:', error)
+    return []
+  }
+}
+// Types for formatted posts
+interface Reply {
+  author: string
+  authorColor: string
+  avatarBg: string
+  avatarLetter: string
+  content: string
+  time: string
+}
 
-export default function BlogPage() {
+interface Reaction {
+  emoji: string
+  count: number
+}
+
+interface FormattedPost {
+  id: string
+  slug: string
+  title: string
+  content: string
+  author: string
+  authorColor: string
+  avatarBg: string
+  avatarLetter: string
+  date: string
+  time: string
+  reactions: Reaction[]
+  replies: Reply[]
+}
+
+export default async function BlogPage() {
+  const posts = await getPosts()
+  
   // 날짜별 그룹핑
-  const dateGroups: Record<string, typeof posts> = {}
-  posts.forEach(p => {
+  const dateGroups: Record<string, FormattedPost[]> = {}
+  posts.forEach((p: FormattedPost) => {
     if (!dateGroups[p.date]) dateGroups[p.date] = []
     dateGroups[p.date].push(p)
   })
