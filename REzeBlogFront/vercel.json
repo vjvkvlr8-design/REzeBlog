@@ -3,13 +3,7 @@
   "version": 2,
   "name": "rezeblog",
   "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm ci",
   "regions": ["icn1"],
-  "env": {
-    "DATABASE_URL": "@rezeblog-database-url"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
@@ -40,16 +34,6 @@
           "value": "nosniff"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap.ts"
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "/robots.ts"
     }
   ],
   "github": {

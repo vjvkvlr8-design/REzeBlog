@@ -39,17 +39,22 @@ function isRateLimited(key: string, isAPI: boolean): boolean {
   return false
 }
 
-// Clean up old entries every 5 minutes
-setInterval(() => {
+// Clean up old entries inline (Edge Runtime does not support setInterval)
+function cleanupRateLimitMap() {
   const now = Date.now()
-  Array.from(rateLimitMap.entries()).forEach(([key, value]) => {
-    if (now > value.resetTime) {
-      rateLimitMap.delete(key)
-    }
-  })
-}, 5 * 60 * 1000)
+  // Only clean up if map is getting large
+  if (rateLimitMap.size > 1000) {
+    rateLimitMap.forEach((value, key) => {
+      if (now > value.resetTime) {
+        rateLimitMap.delete(key)
+      }
+    })
+  }
+}
 
 export function middleware(request: NextRequest) {
+  // Inline cleanup instead of setInterval (Edge Runtime compatible)
+  cleanupRateLimitMap()
   const response = NextResponse.next()
   const clientIP = getClientIP(request)
   const isAPI = request.nextUrl.pathname.startsWith('/api/')
