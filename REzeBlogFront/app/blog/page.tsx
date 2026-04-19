@@ -142,12 +142,14 @@ export default async function BlogPage({ searchParams }: PageProps) {
 
       {/* Chat Messages (Posts) */}
       <div className="chat-messages">
-        {/* Welcome */}
+        {/* Welcome - Dynamic based on selected channel */}
         <div className="welcome-message">
           <div className="welcome-icon">#</div>
-          <h1 className="welcome-title">#일반 채널에 오신 것을 환영해요!</h1>
+          <h1 className="welcome-title">#{currentChannel?.name || '일반'} 채널에 오신 것을 환영해요!</h1>
           <p className="welcome-desc">
-            모든 블로그 게시글이 채팅 형태로 표시됩니다. <Link href="/blog" className="welcome-link">게시글 제목</Link>을 클릭하면 상세 내용을 볼 수 있습니다.
+            {currentChannel 
+              ? `#${currentChannel.name} 채널의 게시글을 채팅 형태로 확인하세요. 게시글을 클릭하면 상세 내용을 볼 수 있습니다.`
+              : '모든 블로그 게시글이 채팅 형태로 표시됩니다. 게시글을 클릭하면 상세 내용을 볼 수 있습니다.'}
           </p>
           <div className="welcome-actions">
             <Link href="/blog" className="welcome-btn primary">
