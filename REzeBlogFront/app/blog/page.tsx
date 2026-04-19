@@ -167,7 +167,7 @@ export default function BlogPage() {
                     <span className="message-timestamp">{post.time}</span>
                   </div>
                   <div className="message-content">
-                    <Link href={`/blog/${post.slug}`} className="message-post-title">
+                    <Link href={`/blog/${post.slug}`} target="_blank" className="message-post-title">
                       {post.title}
                     </Link>
                     <div className="message-post-excerpt">

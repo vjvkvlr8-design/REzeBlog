@@ -55,6 +55,32 @@ function cleanupRateLimitMap() {
 export function middleware(request: NextRequest) {
   // Inline cleanup instead of setInterval (Edge Runtime compatible)
   cleanupRateLimitMap()
+
+  // ========== ADMIN ROUTE PROTECTION ==========
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+  const isAdminLogin = request.nextUrl.pathname === '/admin/login'
+  const isAdminAPI = request.nextUrl.pathname.startsWith('/api/admin')
+  
+  if (isAdminRoute && !isAdminLogin) {
+    // 어드민 페이지 접근 시 인증 확인
+    const adminToken = request.cookies.get('admin_token')?.value
+    
+    if (!adminToken) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+    
+    // 토큰 검증
+    try {
+      const decoded = Buffer.from(adminToken, 'base64').toString()
+      const [prefix] = decoded.split(':')
+      if (prefix !== 'admin') {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+  }
+
   const response = NextResponse.next()
   const clientIP = getClientIP(request)
   const isAPI = request.nextUrl.pathname.startsWith('/api/')
