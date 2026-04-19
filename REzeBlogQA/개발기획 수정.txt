@@ -150,3 +150,35 @@ try { ... } catch { return staticUrls }
 - app/api/reactions/route.ts (신규 생성)
 - app/api/visitor/route.ts (신규 생성)
 - app/layout.tsx (VisitorTracker 추가)
+
+---
+
+## [P2 완료 - 2026-04-19 20:42]
+
+### 작업 내용
+**어드민 분석 API DB 연동 (자율모드)**
+
+| 항목 | 변경 전 | 변경 후 |
+|------|---------|---------|
+| 데이터 소스 | 하드코딩 (가짜 데이터) | DB 실제 데이터 |
+| 방문자 통계 | 고정값 (1247명) | `visitors` 테이블 COUNT |
+| 인기 페이지 | 하드코딩 배열 | `posts.views` 기반 정렬 |
+| 검색 순위 | 하드코딩 | `searchRankings` 테이블 |
+| 최근 방문자 | 가짜 데이터 | `visitors` 테이블 실제 데이터 |
+
+### 커밋
+- **Git**: bc4a5da
+- **메시지**: "feat: P2 어드민 분석 API DB 연동 - 하드코딩 → 실제 데이터"
+
+### Lint 오류 수정
+| 오류 | 원인 | 해결 |
+|------|------|------|
+| `viewCount` 없음 | 스키마 필드명 불일치 | `views`로 수정 |
+| `lastVisit` 없음 | 존재하지 않는 필드 | `createdAt`으로 수정 |
+| `pageViews` 없음 | 필드명 불일치 | `pages`로 수정 |
+| `sessionDuration` 없음 | 필드명 불일치 | `duration`으로 수정 |
+
+### 결과
+- **빌드**: ✅ 성공 (Exit 0)
+- **배포**: Vercel 자동 배포 중
+- **정체성**: 기록 의무 완수 (본 섹션)
