@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
-import { Header } from '@/components/header'
-import { Sidebar } from '@/components/sidebar'
+import { ServerSidebar } from '@/components/server-sidebar'
+import { ChannelSidebar } from '@/components/channel-sidebar'
+import { GameWidget } from '@/components/game-widget'
+import { Suspense } from 'react'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -42,7 +44,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#2f3136',
+  themeColor: '#36393f',
   width: 'device-width',
   initialScale: 1,
 }
@@ -53,17 +55,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko" className="dark">
-      <body className={`${inter.variable} ${notoSansKR.variable} font-sans bg-discord-1000`}>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 flex flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
+    <html lang="ko" className={`${inter.variable} ${notoSansKR.variable}`}>
+      <body>
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+          {/* Discord 3-column layout */}
+          <ServerSidebar />
+          <Suspense fallback={<div className="channel-sidebar" />}>
+            <ChannelSidebar />
+          </Suspense>
+          <div className="chat-area">
+            {children}
           </div>
         </div>
+        {/* Floating game widget */}
+        <GameWidget />
       </body>
     </html>
   )

@@ -1,38 +1,47 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: '페이지를 찾을 수 없습니다 - REzeBlog',
-  description: '요청하신 페이지가 존재하지 않습니다. 다른 콘텐츠를 탐색해보세요.',
+  title: '채널을 찾을 수 없습니다 - REzeBlog',
+  description: '요청하신 채널이 존재하지 않습니다.',
 }
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-[#5865F2] mb-4">404</h1>
-        <h2 className="text-2xl font-semibold text-white mb-4">
-          페이지를 찾을 수 없습니다
-        </h2>
-        <p className="text-[#B9BBBE] mb-8">
-          요청하신 페이지가 존재하지 않거나 이동되었습니다.
-        </p>
-        <div className="space-y-4">
-          <Link
-            href="/"
-            className="inline-block bg-[#5865F2] text-white px-6 py-3 rounded-lg hover:bg-[#4752C4] transition-colors"
-          >
-            메인 페이지로 이동
-          </Link>
-          <div className="block">
+    <>
+      <div className="chat-header">
+        <span className="chat-header-hash">#</span>
+        <span className="chat-header-name">알 수 없는 채널</span>
+      </div>
+      <div className="chat-messages" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400 }}>
+          <div style={{ fontSize: 80, marginBottom: 8 }}>🔍</div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+            채널을 찾을 수 없습니다
+          </h1>
+          <p style={{ color: 'var(--dc-header-secondary)', marginBottom: 24, fontSize: 14 }}>
+            요청하신 채널이 존재하지 않거나 접근 권한이 없습니다.
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
             <Link
-              href="/game"
-              className="text-[#00AFF4] hover:underline"
+              href="/"
+              style={{
+                background: 'var(--dc-brand)', color: '#fff', border: 'none',
+                padding: '10px 24px', borderRadius: 4, textDecoration: 'none', fontSize: 14, fontWeight: 500,
+              }}
             >
-              인터랙티브 스토리 체험하기 →
+              #환영합니다 로 이동
+            </Link>
+            <Link
+              href="/blog"
+              style={{
+                color: 'var(--dc-text-link)', textDecoration: 'none', fontSize: 14, marginTop: 8,
+              }}
+            >
+              블로그 채널 둘러보기 →
             </Link>
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

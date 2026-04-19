@@ -1,3 +1,7 @@
+// 메인 페이지 = Discord #환영합니다 채널
+// 대시보드가 아닌, 블로그 소개 + 최근 활동을 디스코드 채팅으로 표현
+// 작성일: 2026-04-19 (Antigravity)
+
 import { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -8,133 +12,169 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-discord-1000" role="main" aria-label="REzeBlog 메인 페이지">
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8" aria-labelledby="hero-heading">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 id="hero-heading" className="text-5xl md:text-6xl font-bold text-discord-100 mb-6 animate-fade-in">
-            REzeBlog
-          </h1>
-          <p className="text-xl md:text-2xl text-discord-300 mb-4">
-            인터랙티브 스토리텔링 블로그
+    <>
+      {/* Chat Header */}
+      <div className="chat-header">
+        <span className="chat-header-hash">#</span>
+        <span className="chat-header-name">환영합니다</span>
+        <div className="chat-header-divider" />
+        <span className="chat-header-topic">REzeBlog에 오신 것을 환영합니다!</span>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="chat-messages">
+        {/* Welcome banner */}
+        <div className="welcome-message">
+          <div className="welcome-icon">👋</div>
+          <h1 className="welcome-title">#환영합니다 에 오신 것을 환영해요!</h1>
+          <p className="welcome-desc">
+            이곳은 REzeBlog의 시작점입니다. 텍스트 기반 인터랙티브 스토리와 개발 블로그가 결합된 새로운 경험을 만나보세요.
           </p>
-          <p className="text-discord-400 max-w-2xl mx-auto mb-8">
-            텍스트 기반 게임과 블로그의 만낀.
-            당신의 선택이 이야기를 바꿉니다.
-            SEO 최적화로 더 많은 독자에게 다가갑니다.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/game" 
-              className="discord-button text-lg py-3 px-8 focus:outline-none focus:ring-2 focus:ring-discord-brand focus:ring-offset-2"
-              aria-label="인터랙티브 텍스트 게임 시작하기"
-            >
-              <span aria-hidden="true">🎮 </span>게임 시작하기
-            </Link>
-            <Link 
-              href="/blog" 
-              className="discord-button-secondary text-lg py-3 px-8 focus:outline-none focus:ring-2 focus:ring-discord-400 focus:ring-offset-2"
-              aria-label="블로그 둘러보기"
-            >
-              <span aria-hidden="true">📖 </span>블로그 둘러보기
-            </Link>
+        </div>
+
+        {/* Date separator */}
+        <div className="date-separator">
+          <div className="date-separator-line" />
+          <span className="date-separator-text">2026년 4월 19일</span>
+          <div className="date-separator-line" />
+        </div>
+
+        {/* Bot welcome message */}
+        <div className="message message-first">
+          <div className="message-avatar" style={{ background: '#5865f2' }}>R</div>
+          <div className="message-header">
+            <span className="message-username" style={{ color: '#5865f2' }}>REzeBlog Bot</span>
+            <span style={{ fontSize: 12, color: '#5865f2', background: '#5865f233', padding: '1px 4px', borderRadius: 3, fontWeight: 500 }}>BOT</span>
+            <span className="message-timestamp">오늘 오후 3:00</span>
+          </div>
+          <div className="message-content">
+            REzeBlog에 오신 것을 환영합니다! 🎉
           </div>
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-discord-1100" aria-labelledby="features-heading">
-        <div className="max-w-6xl mx-auto">
-          <h2 id="features-heading" className="text-3xl font-bold text-center text-discord-100 mb-12">
-            특징
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <article className="discord-card p-6" aria-labelledby="feature-game">
-              <div className="text-4xl mb-4" aria-hidden="true">🎮</div>
-              <h3 id="feature-game" className="text-xl font-semibold text-discord-100 mb-2">
-                텍스트 기반 게임
-              </h3>
-              <p className="text-discord-400">
-                선택지를 통해 진행되는 인터랙티브 스토리.
-                당신의 결정이 엔딩을 바꿉니다.
-              </p>
-            </article>
-            
-            <article className="discord-card p-6" aria-labelledby="feature-seo">
-              <div className="text-4xl mb-4" aria-hidden="true">🔍</div>
-              <h3 id="feature-seo" className="text-xl font-semibold text-discord-100 mb-2">
-                SEO 최적화
-              </h3>
-              <p className="text-discord-400">
-                Next.js 14 App Router와 SSR로
-                검색엔진 상단 노출 극대화.
-              </p>
-            </article>
-            
-            <article className="discord-card p-6" aria-labelledby="feature-theme">
-              <div className="text-4xl mb-4" aria-hidden="true">🎨</div>
-              <h3 id="feature-theme" className="text-xl font-semibold text-discord-100 mb-2">
-                디스코드 테마
-              </h3>
-              <p className="text-discord-400">
-                익숙하고 편안한 다크 테마 UI.
-                몰입감 있는 독서 경험.
-              </p>
-            </article>
+        <div className="message">
+          <div className="message-content">
+            이곳에서는 인터랙티브 스토리텔링, 개발 이야기, 그리고 텍스트 게임을 만나볼 수 있습니다.
           </div>
         </div>
-      </section>
 
-      {/* Recent Posts Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8" aria-labelledby="posts-heading">
-        <div className="max-w-4xl mx-auto">
-          <h2 id="posts-heading" className="text-3xl font-bold text-discord-100 mb-8">
-            최근 게시글
-          </h2>
-          
-          <div className="space-y-4" role="list">
-            <article className="discord-card p-6 hover:bg-discord-900 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-discord-brand" role="listitem" tabIndex={0}>
-              <h3 className="text-xl font-semibold text-discord-100 mb-2">
-                어둠 속에서 시작하는 이야기
-              </h3>
-              <p className="text-discord-400 mb-4">
-                REzeBlog의 첫 번째 인터랙티브 스토리.
-                당신의 선택이 세상을 바꿉니다.
-              </p>
-              <div className="flex items-center gap-4 text-sm text-discord-500">
-                <span>2026-04-18</span>
-                <span>•</span>
-                <span>인터랙티브 스토리</span>
-                <span>•</span>
-                <span>10분 읽기</span>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      {/* Game Preview Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-discord-1100">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-discord-100 mb-4">🎮 지금 바로 플레이</h2>
-          <p className="text-discord-400 mb-8">텍스트 기반 인터랙티브 스토리를 직접 체험해보세요</p>
-          <div className="discord-card p-6 max-w-xl mx-auto">
-            <p className="game-text text-discord-100 mb-4">주변은 온통 어둠입니다...</p>
-            <div className="flex gap-3 justify-center">
-              <Link href="/game" className="discord-button">게임 시작</Link>
+        {/* Info embed */}
+        <div className="message">
+          <div className="message-embed" style={{ borderLeftColor: '#5865f2' }}>
+            <div className="message-embed-title">📌 REzeBlog 가이드</div>
+            <div className="message-embed-desc">
+              <p>• 왼쪽 채널 목록에서 관심 있는 주제를 선택하세요</p>
+              <p>• 게시글은 채팅 메시지 형태로 표시됩니다</p>
+              <p>• 우측 하단 🎮 버튼으로 미니 텍스트 게임을 플레이할 수 있습니다</p>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-discord-1100 border-t border-discord-800" role="contentinfo">
-        <div className="max-w-6xl mx-auto text-center text-discord-500">
-          <p>© 2026 REzeBlog. All rights reserved.</p>
+        {/* Reactions */}
+        <div className="message">
+          <div className="message-reactions">
+            <button className="message-reaction reacted">👍 3</button>
+            <button className="message-reaction">🎮 1</button>
+            <button className="message-reaction">🔥 2</button>
+          </div>
         </div>
-      </footer>
-    </div>
+
+        {/* Date separator */}
+        <div className="date-separator">
+          <div className="date-separator-line" />
+          <span className="date-separator-text">최근 활동</span>
+          <div className="date-separator-line" />
+        </div>
+
+        {/* Recent activity messages */}
+        <div className="message message-first">
+          <div className="message-avatar green">D</div>
+          <div className="message-header">
+            <span className="message-username" style={{ color: '#3ba55d' }}>개발자</span>
+            <span className="message-timestamp">어제 오후 11:23</span>
+          </div>
+          <div className="message-content">
+            <Link href="/blog?ch=nextjs-tips" className="message-post-title">
+              Next.js 14로 1인 개발 블로그 만들기: 풀스택 가이드
+            </Link>
+            <div className="message-post-excerpt">
+              1인 개발자를 위한 Next.js 14 풀스택 블로그 만들기. App Router, Server Components, PostgreSQL 연동까지 실전 팁을 소개합니다.
+            </div>
+          </div>
+        </div>
+        <div className="message">
+          <div className="message-reactions">
+            <button className="message-reaction">📖 5</button>
+            <button className="message-reaction">💡 2</button>
+          </div>
+        </div>
+
+        <div className="message message-first">
+          <div className="message-avatar purple">S</div>
+          <div className="message-header">
+            <span className="message-username" style={{ color: '#9b59b6' }}>스토리텔러</span>
+            <span className="message-timestamp">어제 오후 8:47</span>
+          </div>
+          <div className="message-content">
+            <Link href="/blog?ch=interactive-storytelling" className="message-post-title">
+              인터랙티브 스토리텔링 완벽 가이드: 독자가 주인공이 되는 이야기
+            </Link>
+            <div className="message-post-excerpt">
+              텍스트 기반 인터랙티브 스토리텔링의 모든 것. 독자의 선택으로 변하는 이야기를 만드는 방법을 소개합니다.
+            </div>
+          </div>
+        </div>
+
+        {/* Reply example */}
+        <div className="message message-first" style={{ marginTop: 8 }}>
+          <div className="message-avatar teal">V</div>
+          <div className="message-reply">
+            <div className="message-reply-avatar" style={{ background: '#9b59b6' }}>S</div>
+            <span className="message-reply-name">스토리텔러</span>
+            <span className="message-reply-text">인터랙티브 스토리텔링 완벽 가이드...</span>
+          </div>
+          <div className="message-header">
+            <span className="message-username" style={{ color: '#1abc9c' }}>방문자</span>
+            <span className="message-timestamp">오늘 오전 9:15</span>
+          </div>
+          <div className="message-content">
+            정말 유용한 가이드네요! Twine으로 시작하는 팁이 특히 좋았습니다 👏
+          </div>
+        </div>
+
+        <div className="message message-first">
+          <div className="message-avatar orange">T</div>
+          <div className="message-header">
+            <span className="message-username" style={{ color: '#faa81a' }}>튜토리얼봇</span>
+            <span className="message-timestamp">오늘 오전 10:30</span>
+          </div>
+          <div className="message-content">
+            <Link href="/blog?ch=text-game-dev" className="message-post-title">
+              텍스트 게임 개발 입문: 코드 없이 시작하는 방법
+            </Link>
+            <div className="message-post-excerpt">
+              프로그래밍 없이 텍스트 기반 게임을 만드는 방법. Twine, Ink, 그리고 Next.js로 진화하는 단계별 가이드.
+            </div>
+          </div>
+        </div>
+        <div className="message">
+          <div className="message-embed" style={{ borderLeftColor: '#faa81a' }}>
+            <div className="message-embed-title">📎 관련 링크</div>
+            <div className="message-embed-desc">
+              <p>Twine: twinery.org</p>
+              <p>Ink: inklestudios.com/ink</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Input */}
+      <div className="chat-input-wrapper">
+        <div className="chat-input">
+          <span className="chat-input-icon">＋</span>
+          <span className="chat-input-placeholder">#환영합니다 에 메시지 보내기</span>
+          <span className="chat-input-icon">😀</span>
+        </div>
+      </div>
+    </>
   )
 }
