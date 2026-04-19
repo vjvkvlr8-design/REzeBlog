@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   description: '텍스트 기반 인터랙티브 스토리, Next.js 14 개발 팁, 1인 개발자를 위한 실전 가이드.',
 }
 
+// Force dynamic rendering to handle query parameters
+export const dynamic = 'force-dynamic'
+
 // Fetch channel info by slug
 async function getChannelInfo(slug: string) {
   try {
