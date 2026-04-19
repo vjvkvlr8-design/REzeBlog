@@ -1,0 +1,360 @@
+---
+title: "Next.js 14로 1인 개발 블로그 만들기: 풀스택 가이드"
+slug: "nextjs-fullstack-blog"
+excerpt: "1인 개발자를 위한 Next.js 14 풀스택 블로그 만들기. App Router, Server Components, PostgreSQL 연동까지 실전 팁을 소개합니다."
+category: "개발 일지"
+date: "2026-04-19"
+readTime: "12분"
+keywords: ["Next.js 14", "1인 개발", "풀스택", "App Router", "Server Components", "PostgreSQL"]
+author: "REzeBlog"
+---
+
+# Next.js 14로 1인 개발 블로그 만들기
+
+**1인 개발자를 위한 풀스택 실전 가이드**
+
+## 왜 Next.js 14인가?
+
+**Next.js 14**는 1인 개발자에게 최적화된 프레임워크입니다. **React Server Components**, **App Router**, **서버리스 배포**가 모두 통합되어 있어 빠르게 프로덕션 수준의 서비스를 출시할 수 있습니다.
+
+### Next.js 14의 강점
+
+| 기능 | 이점 | 1인 개발자에게 |
+|------|------|---------------|
+| **App Router** | 파일 기반 라우팅 | 별도 설정 없이 SEO 친화적 URL |
+| **Server Components** | 서버 사이드 렌더링 | 빠른 초기 로딩 + 검색엔진 최적화 |
+| **Edge Functions** | 전역 배포 | 무료 티어로 전 세계 CDN 활용 |
+| **Image Optimization** | 자동 최적화 | 별도 설정 없이 WebP, 반응형 이미지 |
+
+## 프로젝트 구조 설계
+
+### 1. 디렉토리 구조
+
+```
+REzeBlog/
+├── REzeBlogFront/          # Next.js 프론트엔드
+│   ├── app/                # App Router
+│   │   ├── (routes)/       # 라우트 그룹
+│   │   ├── api/            # API Routes
+│   │   └── layout.tsx      # 루트 레이아웃
+│   ├── components/         # UI 컴포넌트
+│   ├── lib/                # 유틸리티
+│   └── content/            # MDX 콘텐츠
+├── REzeBlogDB/             # PostgreSQL 스키마
+└── REzeBlogDashboard/      # 관리자 대시보드
+```
+
+### 2. App Router 구조화
+
+```typescript
+// app/blog/[slug]/page.tsx
+export async function generateStaticParams() {
+  const posts = await getAllPosts();
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
+export async function generateMetadata({ params }) {
+  const post = await getPostBySlug(params.slug);
+  return {
+    title: post.title,
+    description: post.excerpt,
+    keywords: post.keywords,
+  };
+}
+
+export default async function BlogPostPage({ params }) {
+  const post = await getPostBySlug(params.slug);
+  return <BlogPostContent post={post} />;
+}
+```
+
+## Database 연동: PostgreSQL + Prisma
+
+### 1. 스키마 정의
+
+```prisma
+// schema.prisma
+model Post {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  publishedAt DateTime @default(now())
+  isPublished Boolean @default(false)
+  seoMetadata SeoMetadata?
+  
+  @@index([slug])
+  @@index([publishedAt])
+}
+
+model SeoMetadata {
+  id          String   @id @default(uuid())
+  post        Post     @relation(fields: [postId], references: [id])
+  postId      String   @unique
+  metaTitle   String?
+  metaDescription String?
+  keywords    String[]
+  ogImage     String?
+}
+```
+
+### 2. Server Actions
+
+```typescript
+// app/blog/actions.ts
+'use server'
+
+import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma';
+
+export async function createPost(data: CreatePostInput) {
+  const post = await prisma.post.create({
+    data: {
+      ...data,
+      seoMetadata: {
+        create: data.seoMetadata
+      }
+    },
+    include: {
+      seoMetadata: true
+    }
+  });
+  
+  revalidatePath('/blog');
+  revalidatePath(`/blog/${post.slug}`);
+  
+  return post;
+}
+
+export async function getPostBySlug(slug: string) {
+  return prisma.post.findUnique({
+    where: { slug },
+    include: { 
+      seoMetadata: true,
+      category: true 
+    }
+  });
+}
+```
+
+## SEO 최적화 전략
+
+### 1. 메타데이터 자동 생성
+
+```typescript
+// lib/seo.ts
+export function generateSeoMetadata(post: Post): Metadata {
+  const title = post.seoMetadata?.metaTitle || post.title;
+  const description = post.seoMetadata?.metaDescription || post.excerpt;
+  const keywords = post.seoMetadata?.keywords || extractKeywords(post.content);
+  
+  return {
+    title: `${title} | REzeBlog`,
+    description,
+    keywords,
+    authors: [{ name: post.author }],
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+      publishedTime: post.publishedAt.toISOString(),
+      authors: [post.author],
+      images: [post.seoMetadata?.ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+    robots: {
+      index: post.isPublished,
+      follow: post.isPublished,
+    }
+  };
+}
+```
+
+### 2. 구조화 데이터 (JSON-LD)
+
+```typescript
+// components/structured-data.tsx
+export function BlogPostStructuredData({ post }: { post: Post }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image: post.seoMetadata?.ogImage,
+    datePublished: post.publishedAt.toISOString(),
+    dateModified: post.updatedAt?.toISOString() || post.publishedAt.toISOString(),
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'REzeBlog',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://rezeblog.vercel.app/logo.png'
+      }
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://rezeblog.vercel.app/blog/${post.slug}`
+    }
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+```
+
+## 성능 최적화
+
+### 1. 이미지 최적화
+
+```typescript
+// components/optimized-image.tsx
+import Image from 'next/image';
+
+export function OptimizedImage({ src, alt, ...props }) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      quality={75}
+      placeholder="blur"
+      blurDataURL="data:image/jpeg;base64,/9j/4AAQ..."
+      loading="lazy"
+      {...props}
+    />
+  );
+}
+```
+
+### 2. 코드 분할
+
+```typescript
+// app/blog/[slug]/page.tsx
+import dynamic from 'next/dynamic';
+
+const CommentSection = dynamic(
+  () => import('@/components/comment-section'),
+  { 
+    ssr: false,
+    loading: () => <div>Loading comments...</div>
+  }
+);
+
+const RelatedPosts = dynamic(
+  () => import('@/components/related-posts'),
+  { 
+    loading: () => <div>Loading related posts...</div>
+  }
+);
+```
+
+### 3. 캐싱 전략
+
+```typescript
+// lib/db.ts
+import { cache } from 'react';
+
+export const getPostBySlug = cache(async (slug: string) => {
+  return prisma.post.findUnique({
+    where: { slug },
+    include: { seoMetadata: true }
+  });
+});
+
+export const getAllPosts = cache(async () => {
+  return prisma.post.findMany({
+    where: { isPublished: true },
+    orderBy: { publishedAt: 'desc' }
+  });
+});
+```
+
+## 배포: Vercel
+
+### 1. 환경 변수 설정
+
+```env
+# .env.local
+DATABASE_URL=postgresql://...
+NEXT_PUBLIC_SITE_URL=https://rezeblog.vercel.app
+VERCEL_TOKEN=...
+```
+
+### 2. GitHub Actions CI/CD
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run build
+      - run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+```
+
+## 1인 개발 성공 팁
+
+### 시간 관리
+
+| 시간대 | 작업 | 도구 |
+|--------|------|------|
+| 오전 (2h) | 코어 개발 | VS Code, Next.js |
+| 오후 (2h) | 콘텐츠/SEO | Notion, GA4 |
+| 저녁 (1h) | 배포/분석 | Vercel, Search Console |
+
+### 무료 티어 활용
+
+| 서비스 | 무료 한도 | 용도 |
+|--------|----------|------|
+| Vercel | 100GB/월 | 호스팅 |
+| Supabase | 500MB | PostgreSQL |
+| GitHub | 무제한 | 소스 관리 |
+| Cloudinary | 25GB | 이미지 CDN |
+
+## 결론
+
+Next.js 14는 1인 개발자가 **프로덕션급 서비스**를 만들 수 있는 최적의 프레임워크입니다. Server Components, App Router, 그리고 Vercel의 긴밀한 통합으로 빠르게 출시하고 지속적으로 개선할 수 있습니다.
+
+**시작하기:**
+1. ✅ `npx create-next-app@latest`
+2. ✅ PostgreSQL + Prisma 설정
+3. ✅ MDX 콘텐츠 작성
+4. ✅ Vercel 배포
+
+**지금 바로 여러분의 블로그를 시작하세요!**
+
+---
+
+**관련 게시글:**
+- [인터랙티브 스토리텔링 가이드](/blog/interactive-storytelling-guide)
+- [PostgreSQL로 게임 상태 관리하기](/blog/postgresql-game-state)
