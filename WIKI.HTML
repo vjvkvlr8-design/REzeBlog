@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REzeBlog 시스템 위키</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .navbar {
+            background: #34495e;
+            display: flex;
+            justify-content: center;
+            border-bottom: 3px solid #3498db;
+        }
+        .nav-tab {
+            padding: 15px 40px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+        .nav-tab:hover {
+            background: #3498db;
+        }
+        .nav-tab.active {
+            background: #3498db;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            font-size: 22px;
+        }
+        .card h3 {
+            color: #34495e;
+            margin: 20px 0 15px 0;
+            font-size: 18px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-waiting {
+            background: #e74c3c;
+            color: white;
+        }
+        .status-progress {
+            background: #f39c12;
+            color: white;
+        }
+        .status-complete {
+            background: #27ae60;
+            color: white;
+        }
+        .tree {
+            font-family: 'Consolas', monospace;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            line-height: 1.8;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #34495e;
+            color: white;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        td a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        td a:hover {
+            text-decoration: underline;
+            color: #2980b9;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .module-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 2px solid #e0e0e0;
+        }
+        .module-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .update-time {
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .priority-high {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .priority-low {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>REzeBlog 시스템 위키</h1>
+        <p>검색엔진 최적화 블로그 시스템 - 전체 프로젝트 대시보드</p>
+    </div>
+
+    <div class="navbar">
+        <button class="nav-tab active" onclick="showTab('current')">현재작업중</button>
+        <button class="nav-tab" onclick="showTab('dashboard')">시스템대시보드</button>
+        <button class="nav-tab" onclick="showTab('sysguide')" style="background:#e74c3c;">🔧 시스템구현가이드</button>
+    </div>
+
+    <div class="container">
+        <!-- 현재작업중 탭 -->
+        <div id="current" class="tab-content active">
+            <div class="card">
+                <h2>작업 현황 개요 <span class="status-badge status-waiting">대기중</span></h2>
+                <div class="info-box">
+                    <strong>프로젝트 목표:</strong> 구글 및 한국 포털사이트에서 게시글 상단 노출 (SEO 최적화 블로그)
+                </div>
+                <table>
+                    <tr>
+                        <th>모듈</th>
+                        <th>상태</th>
+                        <th>진행률</th>
+                        <th>비고</th>
+                    </tr>
+                    <tr>
+                        <td>하데스 시스템 (루트)</td>
+                        <td><span class="status-badge status-complete">설정완료</span></td>
+                        <td>100%</td>
+                        <td>품질관리 시스템 구축 완료</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogBackend/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogBackend →</a></td>
+                        <td><span class="status-badge status-progress">진행중</span></td>
+                        <td>80%</td>
+                        <td>API Routes 구현 완료 (/api/game), PostgreSQL 연동</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogDB/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogDB →</a></td>
+                        <td><span class="status-badge status-complete">완료</span></td>
+                        <td>100%</td>
+                        <td>스키마 완료 (6개 테이블, 인덱스, 트리거, 초기 데이터)</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogDashboard/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogDashboard →</a></td>
+                        <td><span class="status-badge status-waiting">대기중</span></td>
+                        <td>0%</td>
+                        <td>MVP 이후 개발</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogFront/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogFront →</a></td>
+                        <td><span class="status-badge status-progress">진행중</span></td>
+                        <td>70%</td>
+                        <td>Next.js 14 초기화, Discord 테마, 게임 UI, 메인 페이지 완료</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogSystem/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogSystem →</a></td>
+                        <td><span class="status-badge status-progress">진행중</span></td>
+                        <td>90%</td>
+                        <td>Docker Compose 완료 (Next.js+PostgreSQL+Redis), Makefile, CI/CD 준비</td>
+                    </tr>
+                    <tr>
+                        <td><a href="file:///C:/REzeBlog/Main/REzeBlogDashboard/%EC%9E%91%EC%97%85%EC%98%A8%EB%B3%B4%EB%93%9C.html">REzeBlogDashboard →</a></td>
+                        <td><span class="status-badge status-complete">완료</span></td>
+                        <td>100%</td>
+                        <td>게임 데이터 시각화, SEO 모니터링, CSV/JSON export, 모바일 반응형, 포트 3001</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>최근 작업 기록</h2>
+                <table>
+                    <tr>
+                        <th>날짜</th>
+                        <th>작업 내용</th>
+                        <th>작업자</th>
+                    </tr>
+                    <tr style="background: #e8f4e8;">
+                        <td>2026-04-19</td>
+                        <td><strong>[Antigravity 투입] Vercel 배포 근본 해결:</strong> 1) middleware.ts setInterval → Edge Runtime 호환 인라인 정리로 변경, 2) next.config.js deprecated 옵션 제거 (swcMinify, images.domains → remotePatterns), 3) vercel.json 중복 빌드 커맨드/rewrite 규칙 제거, 4) Vercel Framework Preset "Other" → "Next.js" 변경, 5) Root Directory REzeBlogFront 확인. <strong>개발 방향성 점검 포함.</strong></td>
+                        <td>Antigravity (외부 에이전트)</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-19</td>
+                        <td><strong>Vercel 프로덕션 배포 완료:</strong> https://rezeblog.vercel.app (별칭: https://rezeblog-qim5afaxx-vjvkvlr8-8163s-projects.vercel.app). Supabase PostgreSQL 연동, Root Directory 문제 해결 (REzeBlogFront → .), GitHub 자동 배포 설정 완료</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>MVP 실행 완료:</strong> Docker Compose 전체 구동 (Next.js 3000, PostgreSQL 5433, Redis 6379). http://localhost:3000 정상 작동. 대시보드 3001은 모듈 경로 오류 발생 (@/lib/db, @/components/*)</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>저장/로드 시스템 완료:</strong> game_saves 테이블, /api/saves API, 슬롯 0-5, 자동/수동 저장, useSaveLoad 훅. Backend 80% → 100%, SAVE_LOAD_SYSTEM.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>콘텐츠 작성 가이드 완료:</strong> SEO 최적화 포스팅 전략, 키워드 리서치, 콘텐츠 구조, 온페이지 SEO, 3주 실행 계획. CONTENT_WRITING_GUIDE.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>대시보드 100% 완성:</strong> 게임 데이터 시각화 (metric cards, charts), SEO 모니터링, CSV/JSON 데이터보내기, 모바일 반응형. 포트 3001, DASHBOARD_README.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>Docker 설치 가이드 완료:</strong> Windows용 Docker Desktop 설치 5단계 절차, 문제 해결, 체크리스트. DOCKER_INSTALL_GUIDE.md 작성. P0 테스트 차단 문제 해결</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>접근성 개선 완료:</strong> 스킵 링크, ARIA 레이블/역할, 스크린 리더 지원, 키보드 네비게이션, WCAG AA 색상 대비. ACCESSIBILITY_GUIDE.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>보안 강화 완료:</strong> CSP 미들웨어, Rate Limiting (100/30 req/min), 보안 헤더 8종 (HSTS, X-Frame-Options 등), lib/security.ts, SECURITY_HARDENING.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>성능 최적화 완료:</strong> next/image (WebP/AVIF), next/font (preload/swap), swcMinify, loading.tsx (Suspense), 번들 최적화. PERFORMANCE_OPTIMIZATION.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>CI/CD 파이프라인 완료:</strong> GitHub Actions (ci.yml, pr-check.yml), Vercel 설정, Docker 없이 테스트→빌드→배포 자동화. CI_CD_SETUP.md 작성</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>SEO 및 UX 자율 강화 완료:</strong> not-found.tsx (404), error.tsx (에러 바운더리), sitemap.ts, robots.ts 생성. Discord 테마 적용, 검색엔진 최적화</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>로컬 개발 환경 대안 완료:</strong> Docker 미설치 문제 대응, WINDOWS_SETUP.md 작성, .env.local 설정, npm run dev + 로컬 PostgreSQL 벤치마크 실행 방법 제공</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>System Docker 환경 완료:</strong> docker-compose.yml (Next.js+PostgreSQL+Redis), Dockerfile/Dockerfile.dev, Makefile, seed.sql. System 모듈 20%→90%</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>자율 리서칭 완료:</strong> 한국 개발자 커뮤니티 TOP 7 분석, 네이버 SEO 2024-2025 전략, 산출물 2개 문서 (Research/korean-developer-community-trends-2025.md, naver-seo-strategy-2025.md)</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>Backend API 테스트 완료:</strong> lib/db.test.ts, app/api/game/route.test.ts, app/api/branches/route.test.ts (총 243줄), Jest 설정 및 벤치마크 스크립트 추가</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>자율 점검 및 문제 해결:</strong> 정체성 규칙 9-12 준수, .env.example, jest.config.js, jest.setup.js, app/blog/page.tsx 생성, npm test 경로 오류 대응</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>자율 모드 전환:</strong> 수동 오더 대기 종료, QA개발자 직접 테스트 및 한국 포럼 리서칭 자율 진행</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>QA 체크포인트 설정:</strong> API 응답속도 < 200ms, 에러 핸들링 통일, PostgreSQL 연동 안정성 검수 기준 확정</td>
+                        <td>QA 엔지니어</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>시스템 규칙 업데이트:</strong> 보고 내용 1000자 제한, @멘션 금지, 상세 내용 WIKI 업데이트 규칙 추가</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>Next.js 14 초기화 완료:</strong> App Router, Discord 테마, 게임 UI, API Routes (/api/game)</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>PostgreSQL 스키마 완료:</strong> game_sessions, game_branches 등 6개 테이블, 인덱스, 트리거 설정</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>총괄디렉터 권한 해제:</strong> 모든 모듈 개발 권한 확보 - Frontend/Backend/DB/System 전체 구현 시작</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>개발 방향 확정:</strong> 방문자 만족감 + SEO 노출 극대화, 지속적 퀄리티 업그레이드</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>Santa Inc. 분석 완료:</strong> game_sessions/game_branches 스키마 도출, 점진적 복잡성 UX 패턴 벤치마크</td>
+                        <td>QA 엔지니어</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>개발 시작:</strong> DB/Backend/Front 병렬 진행 (Santa 분석 기반)</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td><strong>기술 스택 결정 및 모듈 할당:</strong> Next.js 14 + PostgreSQL + Node.js, QA 엔지니어 협의</td>
+                        <td>총괄디렉터</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td>5개 모듈 작업온보드.html 생성 및 WIKI.HTML 링크 연결</td>
+                        <td>AI 에이전트</td>
+                    </tr>
+                    <tr>
+                        <td>2026-04-18</td>
+                        <td>프로젝트 구조 브리핑 및 WIKI.HTML 대시보드 생성</td>
+                        <td>AI 에이전트</td>
+                    </tr>
+                </table>
+                <div class="warning-box">
+                    <strong>알림:</strong> 개발기획 수정.txt 파일에 상세 작업 로그를 기록해야 합니다.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>현재 진행 상황 (자율 모드)</h2>
+                <div class="info-box">
+                    <strong>모드:</strong> 자율 업데이트 진행 중 | <strong>QA 체크포인트:</strong> API 응답 < 200ms, 에러 핸들링, PostgreSQL 안정성
+                </div>
+                <table>
+                    <tr>
+                        <th>우선순위</th>
+                        <th>작업 항목</th>
+                        <th>상태</th>
+                        <th>대상 모듈</th>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">높음</td>
+                        <td>Backend API 테스트 코드 작성 및 실행</td>
+                        <td>진행 예정</td>
+                        <td>REzeBlogBackend</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">높음</td>
+                        <td>Frontend Zustand 상태 관리 구현</td>
+                        <td>대기</td>
+                        <td>REzeBlogFront</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">중간</td>
+                        <td>한국 개발자 커뮤니티 리서칭 (OKKY, Hashcode 등)</td>
+                        <td>진행 예정</td>
+                        <td>전체</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">중간</td>
+                        <td>Docker 개발 환경 설정</td>
+                        <td>대기</td>
+                        <td>REzeBlogSystem</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-low">낮음</td>
+                        <td>SEO 최적화 (Lighthouse 90+ 목표)</td>
+                        <td>기능 완성 후</td>
+                        <td>REzeBlogFront</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- 시스템대시보드 탭 -->
+        <div id="dashboard" class="tab-content">
+            <div class="card">
+                <h2>프로젝트 전체 구조</h2>
+                <div class="tree">
+C:\REzeBlog\                          # 루트: 로컬 대시보드 + 메인 컨트롤러
+├── .windsurf/
+│   └── rules.json                     # Windsurf 규칙
+├── README.md                          # 하데스 시스템 설명서
+├── 정체성.txt                          # ⭐ 프로젝트 헌법
+├── 개발기획 수정.txt                    # 작업 로그
+├── WIKI.HTML                          # ⭐ 시각적 대시보드 (본 파일)
+├── 게이트/                             # 품질 관리 게이트
+│   ├── cli_gate.py                   # CLI 작업 진입점
+│   ├── precommit_gate.py             # 자동 교정 게이트
+│   └── install_githooks.py           # Git 훅 설치
+├── 문서/                               # (비어있음)
+├── 설정/
+│   └── .pre-commit-config.yaml       # pre-commit 설정
+├── 지침/
+│   └── copilot-instructions.md       # AI 지침서
+├── 훅스/
+│   └── pre-commit                    # Git pre-commit 훅
+└── Main/                              # ⭐ 5개 모듈 프로젝트
+    ├── REzeBlogBackend/              # 백엔드 API
+    ├── REzeBlogDB/                   # 데이터베이스
+    ├── REzeBlogDashboard/            # 관리 대시보드
+    ├── REzeBlogFront/                # 프론트엔드
+    └── REzeBlogSystem/               # 시스템/인프라</div>
+            </div>
+
+            <div class="card">
+                <h2>하데스 품질 관리 시스템</h2>
+                <div class="info-box">
+                    모든 작업은 <strong>정체성.txt</strong>를 최우선으로 따릅니다.
+                </div>
+                <table>
+                    <tr>
+                        <th>구성요소</th>
+                        <th>경로</th>
+                        <th>기능</th>
+                    </tr>
+                    <tr>
+                        <td>정체성 문서</td>
+                        <td>정체성.txt</td>
+                        <td>프로젝트 헌법 - 모든 작업의 기준</td>
+                    </tr>
+                    <tr>
+                        <td>CLI 게이트</td>
+                        <td>게이트/cli_gate.py</td>
+                        <td>작업 전 정체성 확인 강제</td>
+                    </tr>
+                    <tr>
+                        <td>Pre-commit 게이트</td>
+                        <td>게이트/precommit_gate.py</td>
+                        <td>자동 Lint 교정</td>
+                    </tr>
+                    <tr>
+                        <td>Git 훅</td>
+                        <td>훅스/pre-commit</td>
+                        <td>커밋 시 품질 검사</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Main 모듈별 역할</h2>
+                <div class="module-grid">
+                    <div class="module-card">
+                        <h4>REzeBlogBackend</h4>
+                        <p>백엔드 API 서버 (/api/game)</p>
+                        <span class="status-badge status-progress">80%</span>
+                    </div>
+                    <div class="module-card">
+                        <h4>REzeBlogDB</h4>
+                        <p>PostgreSQL 6개 테이블 완료</p>
+                        <span class="status-badge status-complete">100%</span>
+                    </div>
+                    <div class="module-card">
+                        <h4>REzeBlogDashboard</h4>
+                        <p>관리자 대시보드</p>
+                        <span class="status-badge status-waiting">대기중</span>
+                    </div>
+                    <div class="module-card">
+                        <h4>REzeBlogFront</h4>
+                        <p>Next.js 14 + Discord 테마</p>
+                        <span class="status-badge status-progress">70%</span>
+                    </div>
+                    <div class="module-card">
+                        <h4>REzeBlogSystem</h4>
+                        <p>Docker/CI-CD 준비중</p>
+                        <span class="status-badge status-waiting">대기중</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>기술 스택 및 아키텍처 결정사항</h2>
+                <div class="info-box">
+                    <strong>2026-04-18 결정 완료</strong> - 총괄디렉터 및 QA 엔지니어 협의
+                </div>
+                <table>
+                    <tr>
+                        <th>구분</th>
+                        <th>선택</th>
+                        <th>이유</th>
+                    </tr>
+                    <tr>
+                        <td>프레임워크</td>
+                        <td><strong>Next.js 14 (App Router)</strong></td>
+                        <td>SSR + RSC 동시 지원, SEO 최적화 필수</td>
+                    </tr>
+                    <tr>
+                        <td>상태 관리</td>
+                        <td><strong>URL 쿼리 + 로컬스토리지 하이브리드</strong></td>
+                        <td>게임 공유 가능 + UX 유지</td>
+                    </tr>
+                    <tr>
+                        <td>백엔드</td>
+                        <td><strong>Node.js + Next.js API Routes</strong></td>
+                        <td>팀 통일성, SEO 메타데이터 생성 용이</td>
+                    </tr>
+                    <tr>
+                        <td>데이터베이스</td>
+                        <td><strong>PostgreSQL</strong></td>
+                        <td>관계형 데이터 + JSON 지원 (게임 분기 저장)</td>
+                    </tr>
+                    <tr>
+                        <td>스타일링</td>
+                        <td><strong>TailwindCSS + Discord 다크테마</strong></td>
+                        <td>반응형 + 사용자 요청 테마</td>
+                    </tr>
+                    <tr>
+                        <td>게임 엔진</td>
+                        <td><strong>자체제작 텍스트 분기 시스템</strong></td>
+                        <td>참고: ParkSB Santa Inc. 벤치마크</td>
+                    </tr>
+                </table>
+                <div class="warning-box">
+                    <strong>SEO QA 체크포인트:</strong> Lighthouse SEO 90+, Core Web Vitals LCP < 2.5s, SSR 필수
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>상세 구현 현황 (2026-04-18)</h2>
+                <div class="info-box">
+                    <strong>완료된 주요 산출물 목록</strong>
+                </div>
+                <table>
+                    <tr>
+                        <th>모듈</th>
+                        <th>산출물</th>
+                        <th>설명</th>
+                    </tr>
+                    <tr>
+                        <td rowspan="2">REzeBlogDB</td>
+                        <td>schema.sql</td>
+                        <td>PostgreSQL 6개 테이블 (game_sessions, game_branches, posts, categories, related_posts, user_logs)</td>
+                    </tr>
+                    <tr>
+                        <td>인덱스/트리거</td>
+                        <td>user_id, current_stage, created_at 인덱스 + updated_at 자동 갱신 트리거</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="5">REzeBlogFront</td>
+                        <td>package.json</td>
+                        <td>Next.js 14.2.0 + TailwindCSS + postgres + drizzle-orm + zustand + framer-motion</td>
+                    </tr>
+                    <tr>
+                        <td>tailwind.config.ts</td>
+                        <td>Discord 다크테마 색상 팔레트 (discord-100 ~ discord-1200)</td>
+                    </tr>
+                    <tr>
+                        <td>app/layout.tsx</td>
+                        <td>SEO 메타데이터, OpenGraph, Twitter Card 설정</td>
+                    </tr>
+                    <tr>
+                        <td>app/page.tsx</td>
+                        <td>메인 페이지 (Hero + Features + Recent Posts)</td>
+                    </tr>
+                    <tr>
+                        <td>app/game/page.tsx</td>
+                        <td>텍스트 게임 UI (Santa Inc. 스타일 - 점진적 복잡성)</td>
+                    </tr>
+                    <tr>
+                        <td>Backend/Front</td>
+                        <td>lib/db.ts</td>
+                        <td>PostgreSQL 연결 유틸 (postgres 드라이버)</td>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>app/api/game/route.ts</td>
+                        <td>게임 세션 API (GET/POST) - URL 쿼리 + 로컬스토리지 연동</td>
+                    </tr>
+                </table>
+                <div class="info-box">
+                    <strong>남은 작업:</strong> Backend API 테스트, Zustand 상태 관리, Docker 설정, SEO 최적화
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>AI 에이전트 작업 규칙</h2>
+                <h3>시작 전 반드시 확인</h3>
+                <ol style="margin-left: 20px; line-height: 2;">
+                    <li><strong>정체성.txt</strong> 파일을 최우선으로 읽고 따릅니다</li>
+                    <li><strong>WIKI.HTML</strong> (본 파일)에서 전체 시스템 구조 파악</li>
+                    <li>작업 대상 모듈의 정체성.txt 확인</li>
+                </ol>
+
+                <h3>작업 중 필수 사항</h3>
+                <ol style="margin-left: 20px; line-height: 2;">
+                    <li>모든 작업 과정을 <strong>개발기획 수정.txt</strong>에 기록</li>
+                    <li>사용자 프롬프트와 AI 응답 전체를 기록</li>
+                    <li>새로운 파일/아키텍처 생성 시 <strong>사용자 승인</strong> 필수</li>
+                    <li>정체성 위반 시 작업 즉시 중단</li>
+                </ol>
+
+                <div class="warning-box">
+                    <strong>중요:</strong> 새로운 세션 시작 시 반드시 정체성.txt → WIKI.HTML → 작업 순서로 진행하세요.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>정체성 핵심 요약</h2>
+                <table>
+                    <tr>
+                        <th>항목</th>
+                        <th>내용</th>
+                    </tr>
+                    <tr>
+                        <td>프로젝트 목표</td>
+                        <td>구글/한국 포털 검색 시 게시글 상단 노출 (SEO)</td>
+                    </tr>
+                    <tr>
+                        <td>핵심 원칙</td>
+                        <td>C:\REzeBlog\Main 각 디렉토리 모듈화</td>
+                    </tr>
+                    <tr>
+                        <td>루트 역할</td>
+                        <td>Main 디렉토리 컨트롤 + 로컬 대시보드</td>
+                    </tr>
+                    <tr>
+                        <td>품질 관리</td>
+                        <td>하데스 시스템 (정체성.txt 기반)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>AI 에이전트 팀 구성</h2>
+                <div class="info-box">
+                    <strong>2026-04-19 업데이트</strong> - 외부 에이전트 Antigravity 투입 기록
+                </div>
+                <table>
+                    <tr>
+                        <th>에이전트</th>
+                        <th>역할</th>
+                        <th>플랫폼</th>
+                        <th>담당 범위</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Windsurf (Cascade)</strong></td>
+                        <td>총괄디렉터 겸 개발자</td>
+                        <td>Windsurf IDE</td>
+                        <td>Frontend, Backend, DB, System, 문서화, SEO, CI/CD 전체</td>
+                    </tr>
+                    <tr>
+                        <td><strong>QA 에이전트</strong></td>
+                        <td>QA 담당</td>
+                        <td>Windsurf IDE</td>
+                        <td>테스트, 벤치마크, 코드 리뷰, 품질 관리</td>
+                    </tr>
+                    <tr style="background: #e8f4e8;">
+                        <td><strong>Antigravity</strong></td>
+                        <td>외부 점검 에이전트 (1회 투입)</td>
+                        <td>Google Gemini (별도 환경)</td>
+                        <td>2026-04-19: Vercel 배포 실패 근본 해결, 코드 품질 점검, 개발 방향성 리뷰. <br>작업 후 Windsurf에게 양도.</td>
+                    </tr>
+                </table>
+                <div class="warning-box">
+                    <strong>Windsurf 참고:</strong> Antigravity는 2026-04-19 1회 투입된 외부 에이전트입니다. 이후 모든 작업은 기존대로 Windsurf가 담당합니다. 아래 "개발 방향성 점검" 섹션을 반드시 확인하세요.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔍 개발 방향성 점검 (Antigravity, 2026-04-19)</h2>
+                <div class="info-box">
+                    <strong>외부 에이전트 Antigravity의 전체 코드 리뷰 결과</strong>
+                </div>
+
+                <h3>✅ 잘하고 있는 것</h3>
+                <table>
+                    <tr><th>항목</th><th>평가</th></tr>
+                    <tr><td>모듈화 구조</td><td>Main 하위 5개 모듈 분리 우수</td></tr>
+                    <tr><td>SEO 기반</td><td>SSR + metadata + sitemap + robots 올바르게 설정</td></tr>
+                    <tr><td>디자인 시스템</td><td>Discord 테마 일관성 유지, Tailwind 커스텀 색상 활용</td></tr>
+                    <tr><td>보안</td><td>CSP, Rate Limiting, HSTS 등 프로덕션 수준 보안 구현</td></tr>
+                    <tr><td>접근성</td><td>ARIA, Skip Link, Screen Reader 지원 구현</td></tr>
+                    <tr><td>문서화</td><td>WIKI.HTML, 개발기획 수정.txt 기반 작업 추적 체계 우수</td></tr>
+                </table>
+
+                <h3>⚠️ 주의/개선 필요 사항</h3>
+                <table>
+                    <tr><th>우선순위</th><th>항목</th><th>설명</th><th>권장 조치</th></tr>
+                    <tr>
+                        <td class="priority-high">높음</td>
+                        <td>환경변수 보안</td>
+                        <td>.env.local이 Git에 포함되어 있음 (API 키, DB URL 노출 위험)</td>
+                        <td>.gitignore에 .env.local 추가 후 git rm --cached 실행</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">높음</td>
+                        <td>게임 로직 미구현</td>
+                        <td>게임 페이지 UI만 있고 실제 분기/상태 변경 로직이 없음. 버튼 클릭 시 아무 반응 없음</td>
+                        <td>Zustand 스토어 + API 연동으로 실제 게임 플레이 구현 필요</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">중간</td>
+                        <td>블로그 게시글 하드코딩</td>
+                        <td>blog/page.tsx에 게시글 데이터가 하드코딩. DB 연동 주석만 있음</td>
+                        <td>DB에서 게시글 fetch하는 Server Component로 전환</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">중간</td>
+                        <td>블로그 상세 페이지 없음</td>
+                        <td>/blog/[slug]/page.tsx 미구현. 링크 클릭 시 404</td>
+                        <td>동적 라우트 + generateStaticParams로 SEO 최적화 구현</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">중간</td>
+                        <td>DB 의존성 런타임 에러</td>
+                        <td>Vercel에 DATABASE_URL 없으면 API 라우트 전체 크래시. 에러 핸들링 부재</td>
+                        <td>DB 없이도 정적 페이지 렌더 가능하도록 fallback 구현</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-low">낮음</td>
+                        <td>미사용 라우트</td>
+                        <td>/stats, /help, /settings 페이지 없음 (사이드바에 링크만 존재)</td>
+                        <td>미구현 페이지 링크 비활성화 또는 placeholder 페이지 생성</td>
+                    </tr>
+                </table>
+
+                <h3>📋 Windsurf 향 권장 작업 순서</h3>
+                <div class="info-box">
+                    <ol style="margin-left: 20px; line-height: 2.2;">
+                        <li><strong>P0:</strong> .env.local Git 제거 → 환경변수 보안 확보</li>
+                        <li><strong>P0:</strong> Vercel 배포 정상 확인 (이번 push로 자동 트리거됨)</li>
+                        <li><strong>P1:</strong> 게임 로직 구현 (Zustand + /api/game 연동)</li>
+                        <li><strong>P1:</strong> /blog/[slug]/page.tsx 상세 페이지 구현</li>
+                        <li><strong>P2:</strong> 블로그 DB 연동 (하드코딩 → PostgreSQL fetch)</li>
+                        <li><strong>P2:</strong> DB 없는 환경 대응 (graceful fallback)</li>
+                        <li><strong>P3:</strong> 미구현 라우트 정리 (/stats, /help, /settings)</li>
+                    </ol>
+                </div>
+            </div>
+        <!-- ==================== 시스템 구현 가이드 탭 ==================== -->
+        <div id="sysguide" class="tab-content">
+            <div class="card">
+                <h2>🔧 시스템 구현 가이드 <span class="status-badge status-waiting">Windsurf 작업 필요</span></h2>
+                <div class="info-box" style="background:#fce4ec; border-color:#e74c3c;">
+                    <strong>⚠️ 중요:</strong> 이 문서는 Antigravity(외부 에이전트)가 작성한 것입니다.<br>
+                    현재 UI는 100% 완성되어 배포 중이지만, <strong>모든 데이터가 하드코딩</strong>입니다.<br>
+                    아래 가이드를 따라 실제 DB 연동 + API 구현을 해야 시스템이 완성됩니다.<br>
+                    작성일: 2026-04-19 | 작성자: Antigravity
+                </div>
+            </div>
+
+            <!-- ========== 1. 아키텍처 개요 ========== -->
+            <div class="card">
+                <h2>1. 현재 아키텍처 (Discord Clone)</h2>
+                <div class="tree">
+브라우저 레이아웃 (app/layout.tsx):
+┌──────────────────────────────────────────────────────────┐
+│ ServerSidebar │ ChannelSidebar │   ChatArea   │ ThreadPanel │
+│   (72px)      │   (240px)      │   (flex-1)   │  (280px)    │
+│               │                │              │             │
+│ 🏠 홈         │ ▼ 환영          │ # 채널명      │ 스레드       │
+│ 💻 개발       │  # 환영합니다    │ ──────────── │ ─ 게시글1    │
+│ 📖 스토리     │  # 블로그-소개   │ [아바타] 작성자│ ─ 게시글2    │
+│ 📚 튜토리얼   │  # 공지사항     │ 게시글 내용    │ ─ 게시글3    │
+│               │ ▼ 개발          │ [리액션]      │             │
+│ + 추가        │  # nextjs-팁   │ ↳ 답장(댓글)  │             │
+│               │  # 풀스택-가이드 │              │             │
+│               │                │ ────────────  │             │
+│               │ [게스트/온라인]  │ [메시지 입력]  │             │
+└──────────────────────────────────────────────────────────┘
+                    + GameWidget (플로팅 팝업, position: fixed)
+
+매핑 규칙:
+  블로그 카테고리 = 디스코드 채널 카테고리 (▼ 환영, ▼ 개발, ...)
+  게시글          = 디스코드 채팅 메시지 (아바타 + 닉네임 + 타임스탬프)
+  게시글 댓글     = 디스코드 답장 (reply 라인 + 원글 참조)
+  게시글 클릭     = 새 탭에서 /blog/[slug] 열림 (target="_blank")
+  텍스트 게임     = 우하단 🎮 플로팅 팝업 (드래그 이동 가능)
+  어드민 패널     = /admin/login (URL 직접 입력만 가능, 어디에도 링크 없음)
+                </div>
+            </div>
+
+            <!-- ========== 2. DB 스키마 ========== -->
+            <div class="card">
+                <h2>2. 데이터베이스 스키마 (PostgreSQL + Prisma)</h2>
+                <div class="info-box">
+                    <strong>현재 상태:</strong> Supabase PostgreSQL 연결됨 (DATABASE_URL 있음), 하지만 테이블 미생성.<br>
+                    <strong>할 일:</strong> Prisma 초기화 → 아래 스키마 생성 → DB 마이그레이션
+                </div>
+                <div class="tree">
+// prisma/schema.prisma
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique          // "환영", "개발", "인터랙티브 스토리"
+  slug      String    @unique          // "welcome", "dev", "interactive-story"
+  order     Int       @default(0)      // 정렬 순서
+  channels  Channel[]
+  createdAt DateTime  @default(now())
+}
+
+model Channel {
+  id         Int       @id @default(autoincrement())
+  name       String                    // "환영합니다", "nextjs-개발팁"
+  slug       String    @unique         // "welcome", "nextjs-tips"
+  categoryId Int
+  category   Category  @relation(fields: [categoryId], references: [id])
+  order      Int       @default(0)
+  posts      Post[]
+  createdAt  DateTime  @default(now())
+}
+
+model Post {
+  id         Int       @id @default(autoincrement())
+  title      String                    // 게시글 제목
+  slug       String    @unique         // URL용 슬러그
+  content    String    @db.Text        // 마크다운 본문
+  excerpt    String?                   // 요약 (채팅에 표시)
+  author     String    @default("관리자")
+  authorColor String   @default("#5865f2")
+  avatarBg   String    @default("purple")
+  channelId  Int
+  channel    Channel   @relation(fields: [channelId], references: [id])
+  comments   Comment[]
+  reactions  Reaction[]
+  views      Int       @default(0)
+  published  Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  content    String
+  author     String    @default("방문자")
+  authorColor String   @default("#1abc9c")
+  postId     Int
+  post       Post      @relation(fields: [postId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model Reaction {
+  id     Int    @id @default(autoincrement())
+  emoji  String                      // "👍", "🔥", "📖"
+  count  Int    @default(1)
+  postId Int
+  post   Post   @relation(fields: [postId], references: [id])
+  @@unique([postId, emoji])
+}
+
+model Visitor {
+  id         Int       @id @default(autoincrement())
+  ip         String
+  country    String?
+  referrer   String?                  // "Google: 인터랙티브 스토리텔링"
+  keyword    String?                  // 유입 키워드
+  userAgent  String?
+  pages      String[]                 // 방문 페이지 배열
+  duration   Int?                     // 체류 시간 (초)
+  createdAt  DateTime  @default(now())
+}
+
+model SearchRanking {
+  id         Int       @id @default(autoincrement())
+  engine     String                   // "google" | "naver"
+  keyword    String
+  rank       Int
+  page       String                   // 해당 페이지 경로
+  clicks     Int       @default(0)
+  impressions Int      @default(0)
+  updatedAt  DateTime  @updatedAt
+  @@unique([engine, keyword])
+}
+                </div>
+                <div class="info-box">
+                    <strong>구현 순서:</strong><br>
+                    1. <code>npx prisma init</code><br>
+                    2. 위 스키마를 prisma/schema.prisma에 붙여넣기<br>
+                    3. <code>npx prisma db push</code> (Supabase에 테이블 생성)<br>
+                    4. <code>npx prisma generate</code> (클라이언트 생성)<br>
+                    5. lib/db.ts에 PrismaClient 싱글턴 생성
+                </div>
+            </div>
+
+            <!-- ========== 3. API 엔드포인트 ========== -->
+            <div class="card">
+                <h2>3. API 엔드포인트 명세</h2>
+                <table>
+                    <tr>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>용도</th>
+                        <th>인증</th>
+                        <th>현재 상태</th>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/categories</td>
+                        <td>카테고리+채널 목록 (사이드바용)</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/posts?channelSlug=xxx</td>
+                        <td>채널별 게시글 목록</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/posts/[slug]</td>
+                        <td>게시글 상세 + 댓글</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/comments</td>
+                        <td>댓글(답장) 작성</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/reactions</td>
+                        <td>리액션 토글</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/visitor</td>
+                        <td>방문자 추적 데이터 전송</td>
+                        <td>없음</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr><td colspan="5" style="background:#ecf0f1; font-weight:bold;">🔒 어드민 전용 (인증 필수)</td></tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/admin/auth</td>
+                        <td>로그인 (httpOnly 쿠키)</td>
+                        <td>비밀번호</td>
+                        <td class="priority-low">✅ 구현됨</td>
+                    </tr>
+                    <tr>
+                        <td>GET</td>
+                        <td>/api/admin/analytics</td>
+                        <td>트래픽/방문자/SEO 데이터</td>
+                        <td>쿠키</td>
+                        <td class="priority-medium">UI만 (하드코딩)</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/admin/categories</td>
+                        <td>카테고리 생성</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>PUT/DELETE</td>
+                        <td>/api/admin/categories/[id]</td>
+                        <td>카테고리 수정/삭제</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/admin/channels</td>
+                        <td>채널 생성</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>PUT/DELETE</td>
+                        <td>/api/admin/channels/[id]</td>
+                        <td>채널 수정/삭제</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>POST</td>
+                        <td>/api/admin/posts</td>
+                        <td>게시글 생성</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                    <tr>
+                        <td>PUT/DELETE</td>
+                        <td>/api/admin/posts/[id]</td>
+                        <td>게시글 수정/삭제</td>
+                        <td>쿠키</td>
+                        <td class="priority-high">미구현</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- ========== 4. 컴포넌트별 DB 연동 ========== -->
+            <div class="card">
+                <h2>4. 컴포넌트별 DB 연동 가이드</h2>
+
+                <h3>4-1. ChannelSidebar (components/channel-sidebar.tsx)</h3>
+                <div class="info-box">
+                    <strong>현재:</strong> 카테고리/채널 하드코딩<br>
+                    <strong>변경:</strong> GET /api/categories → 동적 렌더링<br>
+                    <strong>방법:</strong>
+                    <ol style="margin-left:20px; line-height:2;">
+                        <li>channel-sidebar.tsx를 Client Component로 유지</li>
+                        <li>useEffect에서 /api/categories fetch</li>
+                        <li>응답: [{name:"환영", channels:[{slug:"welcome", name:"환영합니다"}]}]</li>
+                        <li>현재 하드코딩된 categories 배열을 API 응답으로 교체</li>
+                    </ol>
+                </div>
+
+                <h3>4-2. BlogPage (app/blog/page.tsx)</h3>
+                <div class="info-box">
+                    <strong>현재:</strong> 게시글 5개 하드코딩<br>
+                    <strong>변경:</strong> Server Component에서 DB 직접 조회<br>
+                    <strong>코드 패턴:</strong>
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto; margin-top:10px;">
+// app/blog/page.tsx (Server Component)
+import { prisma } from '@/lib/db'
+
+export default async function BlogPage() {
+  const posts = await prisma.post.findMany({
+    where: { published: true },
+    include: { comments: true, reactions: true, channel: true },
+    orderBy: { createdAt: 'desc' },
+  })
+  // posts를 기존 UI에 매핑
+}
+                    </pre>
+                </div>
+
+                <h3>4-3. PostDetail (app/blog/[slug]/page.tsx)</h3>
+                <div class="info-box">
+                    <strong>현재:</strong> postsData 객체에 하드코딩<br>
+                    <strong>변경:</strong> generateStaticParams + DB 조회<br>
+                    <strong>코드 패턴:</strong>
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto; margin-top:10px;">
+export async function generateStaticParams() {
+  const posts = await prisma.post.findMany({ select: { slug: true } })
+  return posts.map(p => ({ slug: p.slug }))
+}
+
+export default async function PostPage({ params }) {
+  const post = await prisma.post.findUnique({
+    where: { slug: params.slug },
+    include: { comments: true, reactions: true },
+  })
+  if (!post) notFound()
+  // 기존 UI 그대로 사용, 데이터만 DB에서
+}
+                    </pre>
+                </div>
+
+                <h3>4-4. ThreadPanel (components/thread-panel.tsx)</h3>
+                <div class="info-box">
+                    <strong>현재:</strong> threads 배열 하드코딩<br>
+                    <strong>변경:</strong> props로 posts 받거나, 별도 API fetch<br>
+                    <strong>방법:</strong> layout.tsx에서 posts를 fetch해서 ThreadPanel에 props 전달
+                </div>
+
+                <h3>4-5. AdminAnalytics (app/api/admin/analytics/route.ts)</h3>
+                <div class="info-box">
+                    <strong>현재:</strong> analyticsData 객체 하드코딩<br>
+                    <strong>변경:</strong> DB에서 Visitor, SearchRanking 테이블 조회<br>
+                    <strong>방법:</strong>
+                    <ol style="margin-left:20px; line-height:2;">
+                        <li>overview: Visitor 테이블에서 COUNT, AVG 쿼리</li>
+                        <li>topPages: Visitor.pages에서 GROUP BY 집계</li>
+                        <li>referrers: Visitor.referrer에서 GROUP BY 집계</li>
+                        <li>searchRankings: SearchRanking 테이블 직접 조회</li>
+                        <li>recentVisitors: Visitor 테이블 최근 20건</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- ========== 5. 방문자 추적 시스템 ========== -->
+            <div class="card">
+                <h2>5. 방문자 추적 시스템 구현</h2>
+                <div class="info-box">
+                    <strong>목표:</strong> 방문자가 어떻게 유입되었고, 어떤 게시글을 보았는지 추적
+                </div>
+
+                <h3>5-1. 클라이언트 추적 스크립트</h3>
+                <div class="info-box">
+                    components/visitor-tracker.tsx (Client Component)를 생성하여 layout.tsx에 추가:<br>
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto; margin-top:10px;">
+// 페이지 로드 시 자동 실행
+'use client'
+import { usePathname } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+
+export function VisitorTracker() {
+  const pathname = usePathname()
+  const startTime = useRef(Date.now())
+  const pages = useRef&lt;string[]&gt;([])
+
+  useEffect(() => {
+    pages.current.push(pathname)
+    
+    // 페이지 이탈 시 데이터 전송
+    const sendData = () => {
+      navigator.sendBeacon('/api/visitor', JSON.stringify({
+        referrer: document.referrer,
+        pages: pages.current,
+        duration: Math.floor((Date.now() - startTime.current) / 1000),
+      }))
+    }
+    
+    window.addEventListener('beforeunload', sendData)
+    return () => window.removeEventListener('beforeunload', sendData)
+  }, [pathname])
+
+  return null // UI 없음
+}
+                    </pre>
+                </div>
+
+                <h3>5-2. 서버 API (app/api/visitor/route.ts)</h3>
+                <div class="info-box">
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto;">
+// POST /api/visitor
+export async function POST(request: Request) {
+  const data = await request.json()
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  
+  // GeoIP로 국가 판별 (vercel은 x-vercel-ip-country 헤더 제공)
+  const country = request.headers.get('x-vercel-ip-country') || '??'
+  
+  // 키워드 추출: referrer에서 q= 파라미터 파싱
+  let keyword = null
+  if (data.referrer) {
+    const url = new URL(data.referrer)
+    keyword = url.searchParams.get('q') || url.searchParams.get('query')
+  }
+  
+  await prisma.visitor.create({
+    data: { ip, country, referrer: data.referrer,
+            keyword, pages: data.pages, duration: data.duration }
+  })
+}
+                    </pre>
+                </div>
+            </div>
+
+            <!-- ========== 6. SEO 랭킹 연동 ========== -->
+            <div class="card">
+                <h2>6. Google/Naver SEO 랭킹 연동</h2>
+                <div class="info-box">
+                    <strong>Google:</strong> Google Search Console API 연동<br>
+                    <strong>Naver:</strong> Naver Search Advisor API 연동<br>
+                    <strong>대안 (간단):</strong> 수동으로 어드민에서 입력하거나, 크론잡으로 주기적 크롤링
+                </div>
+
+                <h3>간단한 구현 (Phase 1 - 수동 입력)</h3>
+                <div class="info-box">
+                    어드민 패널에 "SEO 랭킹 수동 등록" 폼 추가:<br>
+                    - 검색엔진 선택 (Google/Naver)<br>
+                    - 키워드 입력<br>
+                    - 순위 입력<br>
+                    - 해당 페이지 선택<br>
+                    → POST /api/admin/rankings 로 SearchRanking 테이블에 저장
+                </div>
+
+                <h3>고급 구현 (Phase 2 - API 자동화)</h3>
+                <div class="info-box">
+                    1. Google Search Console API:<br>
+                    - Google Cloud Console에서 프로젝트 생성<br>
+                    - Search Console API 활성화<br>
+                    - 서비스 계정 키 생성 → 환경변수에 저장<br>
+                    - Vercel Cron Job (vercel.json crons)으로 매일 1회 조회<br><br>
+                    2. Naver Search Advisor:<br>
+                    - searchadvisor.naver.com 등록<br>
+                    - API 키 발급 → 환경변수 저장<br>
+                    - 동일 크론잡으로 조회
+                </div>
+            </div>
+
+            <!-- ========== 7. 어드민 CRUD 구현 ========== -->
+            <div class="card">
+                <h2>7. 어드민 채널/게시글 CRUD 구현</h2>
+                <div class="info-box" style="background:#fce4ec; border-color:#e74c3c;">
+                    <strong>⚠️ 보안 필수:</strong> 모든 어드민 API에 인증 체크 함수를 반드시 호출할 것!<br>
+                    <code>if (!isAuthenticated()) return NextResponse.json({error:'Unauthorized'}, {status:401})</code>
+                </div>
+
+                <h3>7-1. 인증 체크 유틸 (lib/admin-auth.ts)</h3>
+                <div class="info-box">
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto;">
+import { cookies } from 'next/headers'
+
+export function isAuthenticated(): boolean {
+  const token = cookies().get('admin_token')?.value
+  if (!token) return false
+  try {
+    const decoded = Buffer.from(token, 'base64').toString()
+    const [prefix, , pass] = decoded.split(':')
+    return prefix === 'admin' && pass === process.env.ADMIN_PASSWORD
+  } catch { return false }
+}
+                    </pre>
+                    현재 app/api/admin/analytics/route.ts에 이미 구현되어 있음. 이것을 lib/admin-auth.ts로 분리하여 재사용.
+                </div>
+
+                <h3>7-2. 게시글 CRUD API 패턴</h3>
+                <div class="info-box">
+                    <pre style="background:#2c3e50; color:#ecf0f1; padding:10px; border-radius:5px; overflow-x:auto;">
+// app/api/admin/posts/route.ts
+import { isAuthenticated } from '@/lib/admin-auth'
+import { prisma } from '@/lib/db'
+
+// 게시글 생성
+export async function POST(request: Request) {
+  if (!isAuthenticated()) return unauthorized()
+  const { title, content, channelId, author } = await request.json()
+  const slug = title.toLowerCase()
+    .replace(/[^가-힣a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+  
+  const post = await prisma.post.create({
+    data: { title, slug, content, channelId, author }
+  })
+  return NextResponse.json(post)
+}
+
+// app/api/admin/posts/[id]/route.ts
+// PUT: 수정, DELETE: 삭제 (동일 패턴)
+                    </pre>
+                </div>
+
+                <h3>7-3. 어드민 UI에서 API 연결</h3>
+                <div class="info-box">
+                    app/admin/page.tsx의 "채널/게시글 관리" 탭에서:<br>
+                    - "카테고리 추가" 버튼 → 모달 → POST /api/admin/categories<br>
+                    - "채널 추가" 버튼 → 모달 → POST /api/admin/channels<br>
+                    - "✏️ 수정" 버튼 → 인라인 편집 → PUT /api/admin/channels/[id]<br>
+                    - "🗑️" 버튼 → 확인 대화상자 → DELETE /api/admin/channels/[id]<br>
+                    - "📝 게시글" 버튼 → 게시글 목록/추가 모달 → POST/PUT/DELETE /api/admin/posts
+                </div>
+            </div>
+
+            <!-- ========== 8. 작업 우선순위 ========== -->
+            <div class="card">
+                <h2>8. Windsurf 작업 우선순위 (체크리스트)</h2>
+                <table>
+                    <tr><th>순위</th><th>작업</th><th>파일</th><th>난이도</th></tr>
+                    <tr>
+                        <td class="priority-high">P0</td>
+                        <td>.env.local을 Git에서 제거 (보안)</td>
+                        <td>git rm --cached .env.local → .gitignore 확인</td>
+                        <td>쉬움</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">P0</td>
+                        <td>Prisma 초기화 + DB 마이그레이션</td>
+                        <td>prisma/schema.prisma, lib/db.ts</td>
+                        <td>쉬움</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">P1</td>
+                        <td>카테고리/채널 API + 사이드바 연동</td>
+                        <td>api/categories, channel-sidebar.tsx</td>
+                        <td>중간</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-high">P1</td>
+                        <td>게시글 API + 블로그 페이지 연동</td>
+                        <td>api/posts, blog/page.tsx, blog/[slug]/page.tsx</td>
+                        <td>중간</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">P2</td>
+                        <td>댓글(답장) 작성 기능</td>
+                        <td>api/comments, 채팅 입력바 활성화</td>
+                        <td>중간</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">P2</td>
+                        <td>리액션 토글 기능</td>
+                        <td>api/reactions, 리액션 버튼 onClick</td>
+                        <td>쉬움</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">P2</td>
+                        <td>방문자 추적 시스템</td>
+                        <td>components/visitor-tracker.tsx, api/visitor</td>
+                        <td>중간</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-medium">P2</td>
+                        <td>어드민 CRUD API 연동</td>
+                        <td>api/admin/*, admin/page.tsx</td>
+                        <td>높음</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-low">P3</td>
+                        <td>Google Search Console API 연동</td>
+                        <td>api/admin/rankings, vercel.json crons</td>
+                        <td>높음</td>
+                    </tr>
+                    <tr>
+                        <td class="priority-low">P3</td>
+                        <td>모바일 반응형 (사이드바 토글)</td>
+                        <td>layout.tsx, globals.css @media</td>
+                        <td>중간</td>
+                    </tr>
+                </table>
+
+                <div class="info-box" style="background:#fce4ec; border-color:#e74c3c; margin-top:20px;">
+                    <strong>⚠️ Windsurf 주의사항 (Antigravity의 경고):</strong><br><br>
+                    1. <strong>절대 UI만 만들지 마세요.</strong> 기존에 UI 껍데기만 만들어놓고 실제 동작하지 않는 코드가 많았습니다. 
+                    이번에는 반드시 DB 연동이 동작하는 코드를 작성하세요.<br><br>
+                    2. <strong>하나씩 완성하세요.</strong> P0 → P1 → P2 순서대로 하나를 완전히 끝내고 다음으로 넘어가세요.
+                    여러 기능을 동시에 시작하면 어느 것도 완성되지 않습니다.<br><br>
+                    3. <strong>빌드 확인.</strong> 각 기능 구현 후 반드시 npm run build를 실행하고 에러가 없는지 확인하세요.<br><br>
+                    4. <strong>어드민 보안 절대 타협 금지.</strong> 모든 /api/admin/* 엔드포인트에 isAuthenticated() 체크를 빼먹으면 안 됩니다.
+                </div>
+            </div>
+        </div>
+
+        <div class="update-time">
+            마지막 업데이트: 2026-04-19 16:30 (Antigravity Phase 2 - Discord Clone + Admin Panel)
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // 모든 탭 콘텐츠 숨기기
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // 선택한 탭 표시
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
