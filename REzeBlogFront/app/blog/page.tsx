@@ -26,8 +26,8 @@ async function getChannelInfo(slug: string) {
   }
 }
 
-// Fetch posts from database with optional channel filter
-async function getPosts(channelSlug?: string) {
+// Fetch posts from database with optional channel/category filter
+async function getPosts(channelSlug?: string, categoryName?: string) {
   try {
     let allPosts
     
@@ -40,6 +40,27 @@ async function getPosts(channelSlug?: string) {
           .from(posts)
           .where(and(eq(posts.published, true), eq(posts.channelId, channel[0].id)))
           .orderBy(asc(posts.createdAt))
+      } else {
+        allPosts = await db.select().from(posts).where(eq(posts.published, true)).orderBy(asc(posts.createdAt))
+      }
+    } else if (categoryName) {
+      // Filter by category name - find channels in this category
+      const { categories } = await import('@/db/schema')
+      const category = await db.select().from(categories).where(eq(categories.name, categoryName)).limit(1)
+      
+      if (category.length > 0) {
+        const categoryChannels = await db.select().from(channels).where(eq(channels.categoryId, category[0].id))
+        const channelIds = categoryChannels.map(ch => ch.id)
+        
+        if (channelIds.length > 0) {
+          allPosts = await db
+            .select()
+            .from(posts)
+            .where(and(eq(posts.published, true), ...channelIds.map(id => eq(posts.channelId, id))))
+            .orderBy(asc(posts.createdAt))
+        } else {
+          allPosts = await db.select().from(posts).where(eq(posts.published, true)).orderBy(asc(posts.createdAt))
+        }
       } else {
         allPosts = await db.select().from(posts).where(eq(posts.published, true)).orderBy(asc(posts.createdAt))
       }
@@ -118,11 +139,13 @@ interface PageProps {
 export default async function BlogPage({ searchParams }: PageProps) {
   // Get channel from query param (?ch=channel-slug)
   const channelSlug = typeof searchParams.ch === 'string' ? searchParams.ch : undefined
+  // Get category from query param (?cat=category-name) - used by ServerSidebar
+  const categoryName = typeof searchParams.cat === 'string' ? searchParams.cat : undefined
   
   // Fetch channel info if channel slug is provided
   const currentChannel = channelSlug ? await getChannelInfo(channelSlug) : null
   
-  const posts = await getPosts(channelSlug)
+  const posts = await getPosts(channelSlug, categoryName)
   
   // 날짜별 그룹핑
   const dateGroups: Record<string, FormattedPost[]> = {}
