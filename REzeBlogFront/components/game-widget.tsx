@@ -178,16 +178,18 @@ export function GameWidget() {
             {(progress.flags['true_ending'] || progress.flags['system_ending']) && (
               <button
                 className="game-choice"
-                onClick={() => {
+                onClick={async () => {
                   const { title, content } = getShareableContent()
-                  // Navigate to admin write page with pre-filled content
-                  const encodedTitle = encodeURIComponent(title)
-                  const encodedContent = encodeURIComponent(content)
-                  router.push(`/admin?tab=write&title=${encodedTitle}&content=${encodedContent}`)
+                  try {
+                    await navigator.clipboard.writeText(`${title}\n\n${content}`)
+                    alert('엔딩 복사 완료! 댓글이나 커뮤니티에 공유해보세요.')
+                  } catch (e) {
+                    alert('복사에 실패했습니다. 권한을 확인해주세요.')
+                  }
                 }}
                 style={{ flex: 1, fontSize: 12, background: 'var(--dc-accent)' }}
               >
-                📤 엔딩 공유
+                📋 내용 복사
               </button>
             )}
           </div>

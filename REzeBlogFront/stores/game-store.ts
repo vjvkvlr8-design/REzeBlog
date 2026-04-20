@@ -274,13 +274,13 @@ const gameData: Record<string, GameState> = {
     text: [
       '🔐 **비밀 파일 발견**',
       '',
-      '"비밀번호: REzeBlog2026"',
+      '"비밀번호: [데이터 손상됨: 알 수 없음]"',
       '"이 비밀번호는 어딘가에서 사용됩니다..."',
       '',
-      '✅ **비밀번호를 기록했습니다!**',
+      '✅ **단서를 기록했습니다!**',
     ],
     choices: [
-      { label: '비밀번호를 기록한다', emoji: '📝', nextStage: 'secret-room' },
+      { label: '단서를 기록한다', emoji: '📝', nextStage: 'secret-room' },
       { label: 'exit', emoji: '🚪', nextStage: 'computer' },
     ],
     turn: 5,
