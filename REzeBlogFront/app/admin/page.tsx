@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Modal } from '@/components/admin/modal'
 
 type Tab = 'overview' | 'channels' | 'visitors' | 'seo'
 
@@ -47,6 +48,14 @@ interface Channel {
   postCount?: number
 }
 
+// 카테고리 데이터 타입
+interface Category {
+  id: number
+  name: string
+  slug: string
+  order: number
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
@@ -57,6 +66,17 @@ export default function AdminPage() {
   const [error, setError] = useState('')
   const [scError, setScError] = useState('')
   const router = useRouter()
+
+  // 모달 상태
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [editingChannel, setEditingChannel] = useState<Channel | null>(null)
+  const [deletingItem, setDeletingItem] = useState<{type: 'category' | 'channel', id: number} | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [modalError, setModalError] = useState('')
+  const [modalLoading, setModalLoading] = useState(false)
 
   // Search Console 데이터 가져오기
   const fetchSearchConsole = async () => {
@@ -78,25 +98,41 @@ export default function AdminPage() {
     }
   }
 
+  // 카테고리 목록 가져오기
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/admin/categories')
+      if (res.ok) {
+        const data = await res.json()
+        setCategories(data)
+      }
+    } catch {
+      console.error('Failed to fetch categories')
+    }
+  }
+
   useEffect(() => {
-    // Fetch analytics and channels
+    // Fetch analytics, channels and categories
     Promise.all([
       fetch('/api/admin/analytics'),
-      fetch('/api/admin/channels')
+      fetch('/api/admin/channels'),
+      fetch('/api/admin/categories')
     ])
-      .then(async ([analyticsRes, channelsRes]) => {
+      .then(async ([analyticsRes, channelsRes, categoriesRes]) => {
         if (analyticsRes.status === 401 || channelsRes.status === 401) {
           router.push('/admin/login')
           return null
         }
         const analyticsData = await analyticsRes.json()
         const channelsData = await channelsRes.json()
-        return { analytics: analyticsData, channels: channelsData }
+        const categoriesData = await categoriesRes.json()
+        return { analytics: analyticsData, channels: channelsData, categories: categoriesData }
       })
       .then(data => {
         if (data) {
           setAnalytics(data.analytics)
           setChannels(data.channels)
+          setCategories(data.categories)
         }
         setLoading(false)
       })
@@ -105,6 +141,201 @@ export default function AdminPage() {
         setLoading(false)
       })
   }, [router])
+
+  // 카테고리 CRUD
+  const handleCreateCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setModalLoading(true)
+    setModalError('')
+    
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      order: parseInt(formData.get('order') as string) || 0,
+    }
+
+    try {
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      
+      if (res.ok) {
+        await fetchCategories()
+        setIsCategoryModalOpen(false)
+        setEditingCategory(null)
+      } else {
+        const err = await res.json()
+        setModalError(err.error || '카테고리 생성 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  const handleUpdateCategory = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingCategory) return
+    
+    setModalLoading(true)
+    setModalError('')
+    
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      id: editingCategory.id,
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      order: parseInt(formData.get('order') as string) || 0,
+    }
+
+    try {
+      const res = await fetch('/api/admin/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      
+      if (res.ok) {
+        await fetchCategories()
+        setIsCategoryModalOpen(false)
+        setEditingCategory(null)
+      } else {
+        const err = await res.json()
+        setModalError(err.error || '카테고리 수정 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  const handleDeleteCategory = async () => {
+    if (!deletingItem || deletingItem.type !== 'category') return
+    
+    setModalLoading(true)
+    try {
+      const res = await fetch(`/api/admin/categories?id=${deletingItem.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (res.ok) {
+        await fetchCategories()
+        setIsDeleteModalOpen(false)
+        setDeletingItem(null)
+      } else {
+        setModalError('카테고리 삭제 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  // 채널 CRUD
+  const handleCreateChannel = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setModalLoading(true)
+    setModalError('')
+    
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      categoryId: parseInt(formData.get('categoryId') as string) || null,
+      order: parseInt(formData.get('order') as string) || 0,
+    }
+
+    try {
+      const res = await fetch('/api/admin/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      
+      if (res.ok) {
+        const channelsRes = await fetch('/api/admin/channels')
+        setChannels(await channelsRes.json())
+        setIsChannelModalOpen(false)
+        setEditingChannel(null)
+      } else {
+        const err = await res.json()
+        setModalError(err.error || '채널 생성 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  const handleUpdateChannel = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!editingChannel) return
+    
+    setModalLoading(true)
+    setModalError('')
+    
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      id: editingChannel.id,
+      name: formData.get('name') as string,
+      slug: formData.get('slug') as string,
+      categoryId: parseInt(formData.get('categoryId') as string) || null,
+      order: parseInt(formData.get('order') as string) || 0,
+    }
+
+    try {
+      const res = await fetch('/api/admin/channels', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      
+      if (res.ok) {
+        const channelsRes = await fetch('/api/admin/channels')
+        setChannels(await channelsRes.json())
+        setIsChannelModalOpen(false)
+        setEditingChannel(null)
+      } else {
+        const err = await res.json()
+        setModalError(err.error || '채널 수정 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  const handleDeleteChannel = async () => {
+    if (!deletingItem || deletingItem.type !== 'channel') return
+    
+    setModalLoading(true)
+    try {
+      const res = await fetch(`/api/admin/channels?id=${deletingItem.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (res.ok) {
+        const channelsRes = await fetch('/api/admin/channels')
+        setChannels(await channelsRes.json())
+        setIsDeleteModalOpen(false)
+        setDeletingItem(null)
+      } else {
+        setModalError('채널 삭제 실패')
+      }
+    } catch {
+      setModalError('네트워크 오류')
+    } finally {
+      setModalLoading(false)
+    }
+  }
 
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' })
@@ -244,10 +475,24 @@ export default function AdminPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}># 채널/게시글 관리</h2>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{ background: 'var(--dc-brand)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
+                <button 
+                  onClick={() => {
+                    setEditingCategory(null)
+                    setModalError('')
+                    setIsCategoryModalOpen(true)
+                  }}
+                  style={{ background: 'var(--dc-brand)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+                >
                   + 카테고리 추가
                 </button>
-                <button style={{ background: 'var(--dc-text-positive)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
+                <button 
+                  onClick={() => {
+                    setEditingChannel(null)
+                    setModalError('')
+                    setIsChannelModalOpen(true)
+                  }}
+                  style={{ background: 'var(--dc-text-positive)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14, fontWeight: 600 }}
+                >
                   + 채널 추가
                 </button>
               </div>
@@ -277,9 +522,32 @@ export default function AdminPage() {
                       </td>
                       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                          <button style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>✏️ 수정</button>
-                          <button style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>📝 게시글</button>
-                          <button style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>🗑️</button>
+                          <button 
+                            onClick={() => {
+                              setEditingChannel(ch)
+                              setModalError('')
+                              setIsChannelModalOpen(true)
+                            }}
+                            style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                          >
+                            ✏️ 수정
+                          </button>
+                          <button 
+                            onClick={() => router.push(`/admin/posts?channel=${ch.slug}`)}
+                            style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                          >
+                            📝 게시글
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setDeletingItem({ type: 'channel', id: ch.id })
+                              setModalError('')
+                              setIsDeleteModalOpen(true)
+                            }}
+                            style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -498,6 +766,352 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* 카테고리 추가/수정 모달 */}
+      <Modal
+        isOpen={isCategoryModalOpen}
+        onClose={() => {
+          setIsCategoryModalOpen(false)
+          setEditingCategory(null)
+          setModalError('')
+        }}
+        title={editingCategory ? '카테고리 수정' : '카테고리 추가'}
+      >
+        <form onSubmit={editingCategory ? handleUpdateCategory : handleCreateCategory}>
+          {modalError && (
+            <div style={{ 
+              background: 'rgba(237,66,69,0.1)', 
+              border: '1px solid var(--dc-text-danger)', 
+              borderRadius: 4, 
+              padding: 12, 
+              marginBottom: 16,
+              color: 'var(--dc-text-danger)',
+              fontSize: 14 
+            }}>
+              {modalError}
+            </div>
+          )}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              카테고리 이름
+            </label>
+            <input
+              name="name"
+              type="text"
+              defaultValue={editingCategory?.name || ''}
+              required
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="예: 개발, 디자인"
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              슬러그 (URL)
+            </label>
+            <input
+              name="slug"
+              type="text"
+              defaultValue={editingCategory?.slug || ''}
+              required
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="예: dev, design"
+            />
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              순서
+            </label>
+            <input
+              name="order"
+              type="number"
+              defaultValue={editingCategory?.order || 0}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="0"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsCategoryModalOpen(false)
+                setEditingCategory(null)
+                setModalError('')
+              }}
+              style={{
+                padding: '10px 16px',
+                background: 'var(--dc-bg-tertiary)',
+                border: 'none',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={modalLoading}
+              style={{
+                padding: '10px 16px',
+                background: modalLoading ? 'var(--dc-interactive-muted)' : 'var(--dc-brand)',
+                border: 'none',
+                borderRadius: 4,
+                color: '#fff',
+                cursor: modalLoading ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              {modalLoading ? '저장 중...' : (editingCategory ? '수정' : '추가')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 채널 추가/수정 모달 */}
+      <Modal
+        isOpen={isChannelModalOpen}
+        onClose={() => {
+          setIsChannelModalOpen(false)
+          setEditingChannel(null)
+          setModalError('')
+        }}
+        title={editingChannel ? '채널 수정' : '채널 추가'}
+      >
+        <form onSubmit={editingChannel ? handleUpdateChannel : handleCreateChannel}>
+          {modalError && (
+            <div style={{ 
+              background: 'rgba(237,66,69,0.1)', 
+              border: '1px solid var(--dc-text-danger)', 
+              borderRadius: 4, 
+              padding: 12, 
+              marginBottom: 16,
+              color: 'var(--dc-text-danger)',
+              fontSize: 14 
+            }}>
+              {modalError}
+            </div>
+          )}
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              채널 이름
+            </label>
+            <input
+              name="name"
+              type="text"
+              defaultValue={editingChannel?.name || ''}
+              required
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="예: Next.js 팁"
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              슬러그 (URL)
+            </label>
+            <input
+              name="slug"
+              type="text"
+              defaultValue={editingChannel?.slug || ''}
+              required
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="예: nextjs-tips"
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              카테고리
+            </label>
+            <select
+              name="categoryId"
+              defaultValue={editingChannel?.categoryId || ''}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+            >
+              <option value="">카테고리 없음</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 6 }}>
+              순서
+            </label>
+            <input
+              name="order"
+              type="number"
+              defaultValue={editingChannel?.order || 0}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'var(--dc-bg-tertiary)',
+                border: '1px solid var(--dc-separator)',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                fontSize: 14,
+              }}
+              placeholder="0"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsChannelModalOpen(false)
+                setEditingChannel(null)
+                setModalError('')
+              }}
+              style={{
+                padding: '10px 16px',
+                background: 'var(--dc-bg-tertiary)',
+                border: 'none',
+                borderRadius: 4,
+                color: 'var(--dc-text-normal)',
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={modalLoading}
+              style={{
+                padding: '10px 16px',
+                background: modalLoading ? 'var(--dc-interactive-muted)' : 'var(--dc-brand)',
+                border: 'none',
+                borderRadius: 4,
+                color: '#fff',
+                cursor: modalLoading ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+              }}
+            >
+              {modalLoading ? '저장 중...' : (editingChannel ? '수정' : '추가')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 삭제 확인 모달 */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false)
+          setDeletingItem(null)
+          setModalError('')
+        }}
+        title="삭제 확인"
+      >
+        <div style={{ marginBottom: 20 }}>
+          <p style={{ fontSize: 14, color: 'var(--dc-text-normal)', marginBottom: 8 }}>
+            정말로 이 {deletingItem?.type === 'category' ? '카테고리' : '채널'}을(를) 삭제하시겠습니까?
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--dc-text-danger)' }}>
+            ⚠️ 이 작업은 되돌릴 수 없습니다.
+          </p>
+        </div>
+        {modalError && (
+          <div style={{ 
+            background: 'rgba(237,66,69,0.1)', 
+            border: '1px solid var(--dc-text-danger)', 
+            borderRadius: 4, 
+            padding: 12, 
+            marginBottom: 16,
+            color: 'var(--dc-text-danger)',
+            fontSize: 14 
+          }}>
+            {modalError}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => {
+              setIsDeleteModalOpen(false)
+              setDeletingItem(null)
+              setModalError('')
+            }}
+            style={{
+              padding: '10px 16px',
+              background: 'var(--dc-bg-tertiary)',
+              border: 'none',
+              borderRadius: 4,
+              color: 'var(--dc-text-normal)',
+              cursor: 'pointer',
+              fontSize: 14,
+            }}
+          >
+            취소
+          </button>
+          <button
+            onClick={deletingItem?.type === 'category' ? handleDeleteCategory : handleDeleteChannel}
+            disabled={modalLoading}
+            style={{
+              padding: '10px 16px',
+              background: modalLoading ? 'var(--dc-interactive-muted)' : 'var(--dc-text-danger)',
+              border: 'none',
+              borderRadius: 4,
+              color: '#fff',
+              cursor: modalLoading ? 'not-allowed' : 'pointer',
+              fontSize: 14,
+              fontWeight: 600,
+            }}
+          >
+            {modalLoading ? '삭제 중...' : '삭제'}
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

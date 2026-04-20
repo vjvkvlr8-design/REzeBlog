@@ -232,9 +232,11 @@ export default async function BlogPage({ searchParams }: PageProps) {
       {/* Chat Header */}
       <div className="chat-header">
         <span className="chat-header-hash">#</span>
-        <span className="chat-header-name">일반</span>
+        <span className="chat-header-name">{currentChannel?.name || '모든 채널'}</span>
         <div className="chat-header-divider" />
-        <span className="chat-header-topic">모든 게시글을 한눈에 확인하세요</span>
+        <span className="chat-header-topic">
+          {currentChannel ? `${currentChannel.name} 채널의 게시글` : '모든 게시글을 한눈에 확인하세요'}
+        </span>
       </div>
 
       {/* Chat Messages (Posts) */}
@@ -242,9 +244,11 @@ export default async function BlogPage({ searchParams }: PageProps) {
         {/* Welcome */}
         <div className="welcome-message">
           <div className="welcome-icon">#</div>
-          <h1 className="welcome-title">#일반 채널에 오신 것을 환영해요!</h1>
+          <h1 className="welcome-title">#{currentChannel?.name || '모든 채널'}에 오신 것을 환영해요!</h1>
           <p className="welcome-desc">
-            모든 블로그 게시글이 채팅 형태로 표시됩니다. 게시글을 클릭하면 상세 내용을 볼 수 있습니다.
+            {currentChannel 
+              ? `${currentChannel.name} 채널의 게시글을 확인하세요. 게시글을 클릭하면 상세 내용을 볼 수 있습니다.`
+              : '모든 블로그 게시글이 채팅 형태로 표시됩니다. 왼쪽 사이드바에서 채널을 선택해보세요.'}
           </p>
         </div>
 
