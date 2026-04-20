@@ -1,6 +1,12 @@
 # REzeBlog 개발 환경 Docker Compose
 # 작성일: 2026-04-18
-# 사용법: docker-compose up -d
+# 보안강화: 2026-04-20 - 환경변수 분리, 하드코딩 제거
+# 사용법: 
+#   1. .env.example을 .env로 복사: cp .env.example .env
+#   2. .env 파일에 실제 비밀번호 입력
+#   3. docker-compose up -d
+#
+# ⚠️ 절대 .env 파일을 Git에 커밋하지 마세요!
 
 version: '3.8'
 
@@ -9,10 +15,12 @@ services:
   db:
     image: postgres:15-alpine
     container_name: rezeblog-db
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: rezeblog
-      POSTGRES_PASSWORD: rezeblog123
-      POSTGRES_DB: rezeblog
+      POSTGRES_USER: ${POSTGRES_USER:-rezeblog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_in_env_file}
+      POSTGRES_DB: ${POSTGRES_DB:-rezeblog}
     ports:
       - "5432:5432"
     volumes:
@@ -33,10 +41,12 @@ services:
       context: ./REzeBlogFront
       dockerfile: Dockerfile.dev
     container_name: rezeblog-front
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://rezeblog:rezeblog123@db:5432/rezeblog
-      NODE_ENV: development
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://rezeblog:changeme_in_env_file@db:5432/rezeblog}
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
     volumes:
