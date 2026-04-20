@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Modal } from '@/components/admin/modal'
 
-type Tab = 'overview' | 'channels' | 'visitors' | 'seo'
+type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver'
 
 // Google Search Console 데이터 타입
 interface SearchConsoleData {
@@ -23,6 +23,20 @@ interface SearchConsoleData {
   topPages: { path: string; clicks: number; impressions: number; ctr: number; position: number }[]
   trend: { date: string; clicks: number; impressions: number }[]
   siteInfo: { url: string; permission: string }
+}
+
+// Naver Search Advisor 데이터 타입
+interface NaverSearchAdvisorData {
+  overview: {
+    totalExposures: number
+    totalClicks: number
+    avgPosition: number
+    ctr: number
+  }
+  topKeywords: { keyword: string; exposures: number; clicks: number; position: number; ctr: number }[]
+  topPages: { page: string; exposures: number; clicks: number; ctr: number }[]
+  trend: { date: string; exposures: number; clicks: number }[]
+  siteInfo: { siteId: string; name: string; url: string; status: string }
 }
 
 interface Analytics {
@@ -67,6 +81,11 @@ export default function AdminPage() {
   const [scError, setScError] = useState('')
   const router = useRouter()
 
+  // Naver Search Advisor 상태
+  const [naverData, setNaverData] = useState<NaverSearchAdvisorData | null>(null)
+  const [naverLoading, setNaverLoading] = useState(false)
+  const [naverError, setNaverError] = useState('')
+
   // 모달 상태
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false)
@@ -95,6 +114,26 @@ export default function AdminPage() {
       setScError('Search Console API 호출 실패')
     } finally {
       setScLoading(false)
+    }
+  }
+
+  // Naver Search Advisor 데이터 가져오기
+  const fetchNaverData = async () => {
+    setNaverLoading(true)
+    setNaverError('')
+    try {
+      const res = await fetch('/api/admin/naver-search-advisor')
+      if (res.ok) {
+        const data = await res.json()
+        setNaverData(data)
+      } else {
+        const err = await res.json()
+        setNaverError(err.error || '네이버 검색 데이터 로드 실패')
+      }
+    } catch {
+      setNaverError('네이버 Search Advisor API 호출 실패')
+    } finally {
+      setNaverLoading(false)
     }
   }
 
@@ -358,7 +397,8 @@ export default function AdminPage() {
     { key: 'overview', label: '대시보드', icon: '📊' },
     { key: 'channels', label: '채널/게시글 관리', icon: '#' },
     { key: 'visitors', label: '방문자 추적', icon: '👥' },
-    { key: 'seo', label: 'SEO 랭킹', icon: '🔍' },
+    { key: 'seo', label: 'Google SEO', icon: '🔍' },
+    { key: 'naver', label: 'Naver SEO', icon: '🇰🇷' },
   ]
 
   return (
@@ -760,6 +800,171 @@ export default function AdminPage() {
               }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
                 <div style={{ fontSize: 16, marginBottom: 8 }}>Google Search Console 데이터가 없습니다</div>
+                <div style={{ fontSize: 14 }}>위 버튼을 클릭하여 실시간 검색 데이터를 가져오세요</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NAVER SEARCH ADVISOR TAB */}
+        {tab === 'naver' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>🇰🇷 네이버 Search Advisor 실시간 데이터</h2>
+              <button
+                onClick={fetchNaverData}
+                disabled={naverLoading}
+                style={{
+                  padding: '10px 20px', borderRadius: 4, border: 'none', cursor: naverLoading ? 'not-allowed' : 'pointer',
+                  background: naverLoading ? 'var(--dc-text-muted)' : '#03c75a', color: '#fff',
+                  fontSize: 14, fontWeight: 600,
+                }}
+              >
+                {naverLoading ? '⏳ 로딩중...' : '📥 실시간 데이터 가져오기'}
+              </button>
+            </div>
+
+            {naverError && (
+              <div style={{
+                background: 'rgba(237,66,69,0.1)', border: '1px solid var(--dc-text-danger)', borderRadius: 4,
+                padding: 12, marginBottom: 20, color: 'var(--dc-text-danger)', fontSize: 14
+              }}>
+                ⚠️ {naverError}
+              </div>
+            )}
+
+            {naverData ? (
+              <>
+                {/* Overview Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>총 노출수</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
+                      {naverData.overview.totalExposures.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버 검색 노출</div>
+                  </div>
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>총 클릭수</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
+                      {naverData.overview.totalClicks.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버에서 유입</div>
+                  </div>
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>평균 CTR</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
+                      {naverData.overview.ctr}%
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>클릭률</div>
+                  </div>
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>평균 순위</div>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
+                      {naverData.overview.avgPosition.toFixed(1)}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버 검색 순위</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+                  {/* Top Keywords Table */}
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>
+                      🔥 인기 검색어 TOP 10
+                    </h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                          <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>검색어</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>순위</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {naverData.topKeywords.map((kw, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                            <td style={{ padding: '10px 4px', fontSize: 13 }}>{kw.keyword}</td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
+                              {kw.exposures.toLocaleString()}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#03c75a' }}>
+                              {kw.clicks.toLocaleString()}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px' }}>
+                              <span style={{
+                                padding: '2px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                                background: kw.position <= 3 ? '#3ba55d' : kw.position <= 10 ? '#faa81a' : '#ed4245',
+                                color: '#fff',
+                              }}>
+                                {kw.position.toFixed(1)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Top Pages Table */}
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>
+                      📄 인기 페이지 TOP 10
+                    </h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                          <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>페이지</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출</th>
+                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>CTR</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {naverData.topPages.map((page, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                            <td style={{ padding: '10px 4px', fontSize: 13, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {page.page}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#03c75a' }}>
+                              {page.clicks.toLocaleString()}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
+                              {page.exposures.toLocaleString()}
+                            </td>
+                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14 }}>
+                              {page.ctr.toFixed(2)}%
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Site Info */}
+                <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 16, marginTop: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ fontSize: 24 }}>🇰🇷</div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)' }}>
+                        {naverData.siteInfo.name}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--dc-text-muted)' }}>
+                        {naverData.siteInfo.url} • {naverData.siteInfo.status === 'verified' ? '✅ 인증됨' : '⏳ 인증 대기중'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{
+                background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 40,
+                textAlign: 'center', color: 'var(--dc-text-muted)',
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🇰🇷</div>
+                <div style={{ fontSize: 16, marginBottom: 8 }}>네이버 Search Advisor 데이터가 없습니다</div>
                 <div style={{ fontSize: 14 }}>위 버튼을 클릭하여 실시간 검색 데이터를 가져오세요</div>
               </div>
             )}
