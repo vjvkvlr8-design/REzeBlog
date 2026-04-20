@@ -96,6 +96,9 @@ export class RateLimiter {
   }
 }
 
+// Admin API rate limiter (100 requests per 30 minutes per IP)
+export const adminRateLimiter = new RateLimiter(30 * 60 * 1000, 100)
+
 // Common security headers object
 export const securityHeaders = {
   'X-DNS-Prefetch-Control': 'on',

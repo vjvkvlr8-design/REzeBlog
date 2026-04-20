@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { db } from '@/lib/drizzle'
 import { categories } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { adminRateLimiter } from '@/lib/security'
 
 function isAuthenticated(): boolean {
   const cookieStore = cookies()
@@ -22,7 +23,13 @@ function isAuthenticated(): boolean {
 }
 
 // GET /api/admin/categories - List all categories
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Rate limiting check
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  if (!adminRateLimiter.isAllowed(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+  
   if (!isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -54,6 +61,12 @@ export async function GET() {
 
 // POST /api/admin/categories - Create new category
 export async function POST(request: NextRequest) {
+  // Rate limiting check
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  if (!adminRateLimiter.isAllowed(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+  
   if (!isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -90,6 +103,12 @@ export async function POST(request: NextRequest) {
 
 // PUT /api/admin/categories - Update category
 export async function PUT(request: NextRequest) {
+  // Rate limiting check
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  if (!adminRateLimiter.isAllowed(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+  
   if (!isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -135,6 +154,12 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/admin/categories - Delete category
 export async function DELETE(request: NextRequest) {
+  // Rate limiting check
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  if (!adminRateLimiter.isAllowed(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+  
   if (!isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

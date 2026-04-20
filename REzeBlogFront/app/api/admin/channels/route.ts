@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { db } from '@/lib/drizzle'
 import { channels, categories } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { adminRateLimiter } from '@/lib/security'
 
 function isAuthenticated(): boolean {
   const cookieStore = cookies()
@@ -22,7 +23,13 @@ function isAuthenticated(): boolean {
 }
 
 // GET /api/admin/channels - List all channels with category info
-export async function GET() {
+export async function GET(req: NextRequest) {
+  // Rate limiting check
+  const ip = req.headers.get('x-forwarded-for') || 'unknown'
+  if (!adminRateLimiter.isAllowed(ip)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
+  
   if (!isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
