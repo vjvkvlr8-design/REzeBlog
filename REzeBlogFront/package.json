@@ -13,7 +13,8 @@
     "benchmark:100": "node scripts/benchmark-api.js 100",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "npx tsx db/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.30.0",

@@ -13,6 +13,16 @@ interface GameState {
   turn: number
 }
 
+interface SaveSlot {
+  slot: number
+  name: string
+  stage: string
+  turn: number
+  savedAt: string
+}
+
+const STORAGE_KEY = 'rezeblog-game-save'
+
 const gameData: Record<string, GameState> = {
   intro: {
     stage: 'intro',
@@ -72,9 +82,24 @@ export function GameWidget() {
   const [position, setPosition] = useState({ x: -1, y: -1 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [showSaveMenu, setShowSaveMenu] = useState(false)
+  const [saveSlots, setSaveSlots] = useState<SaveSlot[]>([])
   const widgetRef = useRef<HTMLDivElement>(null)
 
   const game = gameData[currentStage] || gameData.intro
+
+  // Load save slots from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        const slots = JSON.parse(saved) as SaveSlot[]
+        setSaveSlots(slots)
+      } catch {
+        setSaveSlots([])
+      }
+    }
+  }, [])
 
   // Initialize position on mount
   useEffect(() => {
@@ -85,6 +110,36 @@ export function GameWidget() {
       })
     }
   }, [position.x])
+
+  // Save game to slot
+  const saveGame = useCallback((slot: number, name?: string) => {
+    const newSave: SaveSlot = {
+      slot,
+      name: name || `저장 ${slot} (턴 ${game.turn})`,
+      stage: currentStage,
+      turn: game.turn,
+      savedAt: new Date().toISOString(),
+    }
+    const updated = [...saveSlots.filter(s => s.slot !== slot), newSave].sort((a, b) => a.slot - b.slot)
+    setSaveSlots(updated)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+  }, [currentStage, game.turn, saveSlots])
+
+  // Load game from slot
+  const loadGame = useCallback((slot: number) => {
+    const save = saveSlots.find(s => s.slot === slot)
+    if (save && gameData[save.stage]) {
+      setCurrentStage(save.stage)
+      setShowSaveMenu(false)
+    }
+  }, [saveSlots])
+
+  // Auto save on stage change
+  useEffect(() => {
+    if (currentStage !== 'intro') {
+      saveGame(0, '자동 저장')
+    }
+  }, [currentStage, saveGame])
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (widgetRef.current) {
@@ -189,6 +244,61 @@ export function GameWidget() {
               </p>
             ))}
           </div>
+
+          {/* Save/Load buttons */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button
+              className="game-choice"
+              onClick={() => setShowSaveMenu(!showSaveMenu)}
+              style={{ flex: 1, fontSize: 12 }}
+            >
+              💾 저장/불러오기
+            </button>
+          </div>
+
+          {/* Save/Load Menu */}
+          {showSaveMenu && (
+            <div style={{
+              background: 'var(--dc-bg-tertiary)',
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 12,
+              maxHeight: 150,
+              overflow: 'auto',
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--dc-text-muted)', marginBottom: 8 }}>저장 슬롯</div>
+              {[1, 2, 3].map(slot => {
+                const save = saveSlots.find(s => s.slot === slot)
+                return (
+                  <div key={slot} style={{ display: 'flex', gap: 4, marginBottom: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 12, width: 20 }}>{slot}.</span>
+                    {save ? (
+                      <>
+                        <span style={{ fontSize: 12, flex: 1, color: 'var(--dc-text-normal)' }}>
+                          {save.name}
+                        </span>
+                        <button className="game-choice" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => loadGame(slot)}>
+                          불러오기
+                        </button>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 12, flex: 1, color: 'var(--dc-text-muted)' }}>빈 슬롯</span>
+                    )}
+                    <button className="game-choice" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => saveGame(slot)}>
+                      저장
+                    </button>
+                  </div>
+                )
+              })}
+              {saveSlots.find(s => s.slot === 0) && (
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--dc-separator)' }}>
+                  <button className="game-choice" style={{ width: '100%', fontSize: 11 }} onClick={() => loadGame(0)}>
+                    🔄 자동 저장 불러오기 (턴 {saveSlots.find(s => s.slot === 0)?.turn})
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Choices */}
           <div>

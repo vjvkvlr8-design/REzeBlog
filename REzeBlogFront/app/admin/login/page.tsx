@@ -26,7 +26,10 @@ export default function AdminLogin() {
       })
 
       if (res.ok) {
-        router.push('/admin')
+        // Password manager DOM injection (Chrome Autofill) causes React 'removeChild' errors 
+        // during client-side unmount. Use hard redirect to bypass entirely.
+        window.location.href = '/admin'
+        return // prevent finally from executing and updating state on unmounting component
       } else {
         setError('비밀번호가 올바르지 않습니다')
       }

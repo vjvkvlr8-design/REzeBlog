@@ -7,7 +7,7 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface Channel {
   slug: string
@@ -20,6 +20,32 @@ interface Category {
   name: string
   channels: Channel[]
 }
+
+// Fallback data when API fails
+const FALLBACK_CATEGORIES: Category[] = [
+  {
+    name: '▼ 환영',
+    channels: [
+      { slug: 'welcome', name: '환영합니다' },
+      { slug: 'announcements', name: '공지사항' },
+    ]
+  },
+  {
+    name: '▼ 개발',
+    channels: [
+      { slug: 'nextjs-tips', name: 'Next.js 팁' },
+      { slug: 'interactive-story', name: '인터랙티브 스토리' },
+      { slug: 'seo-strategy', name: 'SEO 전략' },
+    ]
+  },
+  {
+    name: '▼ 커뮤니티',
+    channels: [
+      { slug: 'general', name: '일반' },
+      { slug: 'qna', name: '질문과 답변' },
+    ]
+  }
+]
 
 export function ChannelSidebar() {
   const pathname = usePathname()
@@ -48,8 +74,8 @@ export function ChannelSidebar() {
         setCategories(transformed)
       } catch (err) {
         console.error('Failed to fetch categories:', err)
-        // Fallback to empty if API fails
-        setCategories([])
+        // Use fallback data when API fails
+        setCategories(FALLBACK_CATEGORIES)
       } finally {
         setLoading(false)
       }
@@ -62,8 +88,43 @@ export function ChannelSidebar() {
     setCollapsed(prev => ({ ...prev, [name]: !prev[name] }))
   }
 
+  // Mobile menu state
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setMobileOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   return (
-    <div className="channel-sidebar">
+    <>
+      {/* Mobile menu toggle button */}
+      <button
+        className="mobile-menu-toggle"
+        onClick={() => setMobileOpen(!mobileOpen)}
+        aria-label={mobileOpen ? '메뉴 닫기' : '메뉴 열기'}
+      >
+        {mobileOpen ? '✕' : '☰'}
+      </button>
+
+      {/* Backdrop for mobile */}
+      <div
+        className={`sidebar-backdrop ${mobileOpen ? 'visible' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+
+      <div className={`channel-sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
       {/* Server name header */}
       <div className="channel-header">
         <span style={{ flex: 1 }}>REzeBlog</span>
@@ -122,5 +183,6 @@ export function ChannelSidebar() {
         </div>
       </div>
     </div>
+    </>
   )
 }
