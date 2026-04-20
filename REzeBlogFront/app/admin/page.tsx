@@ -9,6 +9,21 @@ import { useRouter } from 'next/navigation'
 
 type Tab = 'overview' | 'channels' | 'visitors' | 'seo'
 
+// Google Search Console 데이터 타입
+interface SearchConsoleData {
+  overview: {
+    totalClicks: number
+    totalImpressions: number
+    avgCtr: number
+    avgPosition: number
+    period: string
+  }
+  topKeywords: { keyword: string; clicks: number; impressions: number; ctr: number; position: number }[]
+  topPages: { path: string; clicks: number; impressions: number; ctr: number; position: number }[]
+  trend: { date: string; clicks: number; impressions: number }[]
+  siteInfo: { url: string; permission: string }
+}
+
 interface Analytics {
   overview: { totalVisitors: number; todayVisitors: number; pageViews: number; avgSessionDuration: string; bounceRate: string }
   topPages: { path: string; title: string; views: number; uniqueVisitors: number }[]
@@ -35,13 +50,36 @@ interface Channel {
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
+  const [searchConsole, setSearchConsole] = useState<SearchConsoleData | null>(null)
   const [channels, setChannels] = useState<Channel[]>([])
   const [loading, setLoading] = useState(true)
+  const [scLoading, setScLoading] = useState(false)
   const [error, setError] = useState('')
+  const [scError, setScError] = useState('')
   const router = useRouter()
 
+  // Search Console 데이터 가져오기
+  const fetchSearchConsole = async () => {
+    setScLoading(true)
+    setScError('')
+    try {
+      const res = await fetch('/api/admin/search-console')
+      if (res.ok) {
+        const data = await res.json()
+        setSearchConsole(data)
+      } else {
+        const err = await res.json()
+        setScError(err.error || 'Search Console 데이터 로드 실패')
+      }
+    } catch {
+      setScError('Search Console API 호출 실패')
+    } finally {
+      setScLoading(false)
+    }
+  }
+
   useEffect(() => {
-    // Fetch both analytics and channels
+    // Fetch analytics and channels
     Promise.all([
       fetch('/api/admin/analytics'),
       fetch('/api/admin/channels')
@@ -296,110 +334,167 @@ export default function AdminPage() {
         )}
 
         {/* SEO TAB */}
-        {tab === 'seo' && analytics && (
+        {tab === 'seo' && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 20 }}>🔍 검색 랭킹 & 키워드</h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 32 }}>
-              {/* Google Rankings */}
-              <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#4285f4' }}>G</span> Google 검색 랭킹
-                </h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                      <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>키워드</th>
-                      <th style={{ textAlign: 'center', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>순위</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analytics.searchRankings.google.map((item, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                        <td style={{ padding: '10px 4px', fontSize: 14 }}>{item.keyword}</td>
-                        <td style={{ textAlign: 'center', padding: '10px 4px' }}>
-                          <span style={{
-                            display: 'inline-block', minWidth: 32, padding: '2px 8px', borderRadius: 10,
-                            fontSize: 14, fontWeight: 700, textAlign: 'center',
-                            background: item.rank <= 3 ? '#3ba55d' : item.rank <= 10 ? '#faa81a' : '#ed4245',
-                            color: '#fff',
-                          }}>
-                            {item.rank}위
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Naver Rankings */}
-              <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: '#03c75a' }}>N</span> Naver 검색 랭킹
-                </h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                      <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>키워드</th>
-                      <th style={{ textAlign: 'center', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>순위</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analytics.searchRankings.naver.map((item, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                        <td style={{ padding: '10px 4px', fontSize: 14 }}>{item.keyword}</td>
-                        <td style={{ textAlign: 'center', padding: '10px 4px' }}>
-                          <span style={{
-                            display: 'inline-block', minWidth: 32, padding: '2px 8px', borderRadius: 10,
-                            fontSize: 14, fontWeight: 700,
-                            background: item.rank <= 3 ? '#3ba55d' : item.rank <= 10 ? '#faa81a' : '#ed4245',
-                            color: '#fff',
-                          }}>
-                            {item.rank}위
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>🔍 Google Search Console 실시간 데이터</h2>
+              <button
+                onClick={fetchSearchConsole}
+                disabled={scLoading}
+                style={{
+                  background: scLoading ? 'var(--dc-interactive-muted)' : '#4285f4',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: 4,
+                  cursor: scLoading ? 'not-allowed' : 'pointer',
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}
+              >
+                {scLoading ? '🔄 로딩 중...' : '📊 데이터 가져오기'}
+              </button>
             </div>
 
-            {/* Top Keywords */}
-            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16 }}>🔑 유입 키워드 TOP</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                    <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>키워드</th>
-                    <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭수</th>
-                    <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출수</th>
-                    <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>CTR</th>
-                    <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>평균 순위</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytics.topKeywords.map((kw, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                      <td style={{ padding: '10px 4px', fontSize: 14, fontWeight: 600 }}>{kw.keyword}</td>
-                      <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-link)' }}>{kw.clicks}</td>
-                      <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>{kw.impressions.toLocaleString()}</td>
-                      <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14 }}>{(kw.clicks / kw.impressions * 100).toFixed(1)}%</td>
-                      <td style={{ textAlign: 'right', padding: '10px 4px' }}>
-                        <span style={{
-                          padding: '2px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                          background: kw.position <= 3 ? '#3ba55d' : kw.position <= 10 ? '#faa81a' : '#ed4245',
-                          color: '#fff',
-                        }}>
-                          {kw.position.toFixed(1)}
-                        </span>
-                      </td>
-                    </tr>
+            {scError && (
+              <div style={{
+                background: 'rgba(237,66,69,0.1)',
+                border: '1px solid var(--dc-text-danger)',
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 20,
+                color: 'var(--dc-text-danger)',
+              }}>
+                ⚠️ {scError}
+              </div>
+            )}
+
+            {searchConsole ? (
+              <>
+                {/* Overview Stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+                  {[
+                    { label: '총 클릭수', value: searchConsole.overview.totalClicks.toLocaleString(), color: '#4285f4' },
+                    { label: '총 노출수', value: searchConsole.overview.totalImpressions.toLocaleString(), color: '#34a853' },
+                    { label: '평균 CTR', value: `${searchConsole.overview.avgCtr}%`, color: '#fbbc04' },
+                    { label: '평균 순위', value: searchConsole.overview.avgPosition.toFixed(1), color: '#ea4335' },
+                  ].map((stat, i) => (
+                    <div key={i} style={{
+                      background: 'var(--dc-bg-secondary)',
+                      borderRadius: 8,
+                      padding: 20,
+                      borderLeft: `4px solid ${stat.color}`,
+                    }}>
+                      <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginBottom: 8, fontWeight: 600 }}>
+                        {stat.label}
+                      </div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--dc-header-primary)' }}>
+                        {stat.value}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--dc-text-muted)', marginTop: 4 }}>
+                        {searchConsole.overview.period}
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </div>
+
+                {/* Top Keywords */}
+                <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20, marginBottom: 20 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16 }}>
+                    🔑 검색 키워드 TOP 10
+                  </h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                        <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>키워드</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭수</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출수</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>CTR</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>평균 순위</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchConsole.topKeywords.map((kw, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                          <td style={{ padding: '10px 4px', fontSize: 14, fontWeight: 600 }}>{kw.keyword}</td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#4285f4' }}>
+                            {kw.clicks.toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
+                            {kw.impressions.toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14 }}>
+                            {kw.ctr}%
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px' }}>
+                            <span style={{
+                              padding: '2px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                              background: kw.position <= 3 ? '#3ba55d' : kw.position <= 10 ? '#faa81a' : '#ed4245',
+                              color: '#fff',
+                            }}>
+                              {kw.position.toFixed(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Top Pages */}
+                <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16 }}>
+                    � 인기 페이지 TOP 10
+                  </h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                        <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>페이지</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭수</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출수</th>
+                        <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>순위</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {searchConsole.topPages.map((page, i) => (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                          <td style={{ padding: '10px 4px', fontSize: 13, maxWidth: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {page.path}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#4285f4' }}>
+                            {page.clicks.toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
+                            {page.impressions.toLocaleString()}
+                          </td>
+                          <td style={{ textAlign: 'right', padding: '10px 4px' }}>
+                            <span style={{
+                              padding: '2px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+                              background: page.position <= 3 ? '#3ba55d' : page.position <= 10 ? '#faa81a' : '#ed4245',
+                              color: '#fff',
+                            }}>
+                              {page.position.toFixed(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div style={{
+                background: 'var(--dc-bg-secondary)',
+                borderRadius: 8,
+                padding: 40,
+                textAlign: 'center',
+                color: 'var(--dc-text-muted)',
+              }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+                <div style={{ fontSize: 16, marginBottom: 8 }}>Google Search Console 데이터가 없습니다</div>
+                <div style={{ fontSize: 14 }}>위 버튼을 클릭하여 실시간 검색 데이터를 가져오세요</div>
+              </div>
+            )}
           </div>
         )}
       </div>

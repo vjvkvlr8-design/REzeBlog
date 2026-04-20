@@ -24,14 +24,14 @@ interface Category {
 // Fallback data when API fails
 const FALLBACK_CATEGORIES: Category[] = [
   {
-    name: '▼ 환영',
+    name: '환영',
     channels: [
       { slug: 'welcome', name: '환영합니다' },
       { slug: 'announcements', name: '공지사항' },
     ]
   },
   {
-    name: '▼ 개발',
+    name: '개발',
     channels: [
       { slug: 'nextjs-tips', name: 'Next.js 팁' },
       { slug: 'interactive-story', name: '인터랙티브 스토리' },
@@ -39,7 +39,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     ]
   },
   {
-    name: '▼ 커뮤니티',
+    name: '커뮤니티',
     channels: [
       { slug: 'general', name: '일반' },
       { slug: 'qna', name: '질문과 답변' },
