@@ -781,8 +781,6 @@
     width: 100vw;
   }
 
-  /* Thread panel - hidden on mobile */
-  .thread-panel { display: none; }
 
   /* Game widget - smaller on mobile */
   .game-widget {

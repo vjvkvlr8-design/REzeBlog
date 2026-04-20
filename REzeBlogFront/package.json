@@ -17,6 +17,8 @@
     "db:seed": "npx tsx db/seed.ts"
   },
   "dependencies": {
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.4.0",
     "drizzle-orm": "^0.30.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.344.0",
@@ -24,6 +26,7 @@
     "postgres": "^3.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^3.8.1",
     "zustand": "^4.5.0"
   },
   "devDependencies": {

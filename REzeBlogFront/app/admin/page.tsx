@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Modal } from '@/components/admin/modal'
 import { MarkdownEditor } from '@/components/admin/markdown-editor'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts'
 
 type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver' | 'write'
 
@@ -26,19 +27,19 @@ interface SearchConsoleData {
   siteInfo: { url: string; permission: string }
 }
 
-// Naver Search Advisor 데이터 타입
-interface NaverSearchAdvisorData {
+// Supabase 방문자 인사이트 데이터 타입
+interface VisitorInsightsData {
   overview: {
-    totalExposures: number
-    totalClicks: number
-    avgPosition: number
-    ctr: number
+    totalSessions: number
+    botTraffic: number
+    humanTraffic: number
   }
-  topKeywords: { keyword: string; exposures: number; clicks: number; position: number; ctr: number }[]
-  topPages: { page: string; exposures: number; clicks: number; ctr: number }[]
-  trend: { date: string; exposures: number; clicks: number }[]
-  siteInfo: { siteId: string; name: string; url: string; status: string }
+  keywords: { keyword: string; count: number; percentage: number }[]
+  multiViews: { pages: number; users: number }[]
 }
+
+const COLORS = ['#5865F2', '#EB459E', '#FEE75C', '#1ABC9C', '#ED4245'];
+const TRAFFIC_COLORS = ['#3ba55d', '#ed4245'];
 
 interface Analytics {
   overview: { totalVisitors: number; todayVisitors: number; pageViews: number; avgSessionDuration: string; bounceRate: string }
@@ -82,10 +83,10 @@ export default function AdminPage() {
   const [scError, setScError] = useState('')
   const router = useRouter()
 
-  // Naver Search Advisor 상태
-  const [naverData, setNaverData] = useState<NaverSearchAdvisorData | null>(null)
-  const [naverLoading, setNaverLoading] = useState(false)
-  const [naverError, setNaverError] = useState('')
+  // 방문자 인사이트 상태
+  const [insightsData, setInsightsData] = useState<VisitorInsightsData | null>(null)
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  const [insightsError, setInsightsError] = useState('')
 
   // 모달 상태
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
@@ -101,7 +102,6 @@ export default function AdminPage() {
   // 글쓰기 상태
   const [writeTitle, setWriteTitle] = useState('')
   const [writeContent, setWriteContent] = useState('')
-  const [writeCategoryId, setWriteCategoryId] = useState<number | ''>('')
   const [writeChannelId, setWriteChannelId] = useState<number | ''>('')
   const [writeTags, setWriteTags] = useState('')
   const [writeExcerpt, setWriteExcerpt] = useState('')
@@ -129,24 +129,30 @@ export default function AdminPage() {
     }
   }
 
-  // Naver Search Advisor 데이터 가져오기
-  const fetchNaverData = async () => {
-    setNaverLoading(true)
-    setNaverError('')
-    try {
-      const res = await fetch('/api/admin/naver-search-advisor')
-      if (res.ok) {
-        const data = await res.json()
-        setNaverData(data)
-      } else {
-        const err = await res.json()
-        setNaverError(err.error || '네이버 검색 데이터 로드 실패')
-      }
-    } catch {
-      setNaverError('네이버 Search Advisor API 호출 실패')
-    } finally {
-      setNaverLoading(false)
-    }
+  // 방문자 인사이트 데이터 로커 (가상 연동)
+  const fetchInsightsData = async () => {
+    setInsightsLoading(true)
+    setInsightsError('')
+    
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 800))
+    
+    setInsightsData({
+      overview: { totalSessions: 14502, humanTraffic: 11200, botTraffic: 3302 },
+      keywords: [
+        { keyword: '디스코드 블로그', count: 324, percentage: 35 },
+        { keyword: 'Next.js 텍스트 방탈출', count: 210, percentage: 22 },
+        { keyword: 'vercel 봇 차단 설정', count: 180, percentage: 19 },
+      ],
+      multiViews: [
+        { pages: 1, users: 4500 },
+        { pages: 2, users: 3200 },
+        { pages: 3, users: 1800 },
+        { pages: 4, users: 500 },
+      ]
+    })
+    
+    setInsightsLoading(false)
   }
 
   // 카테고리 목록 가져오기
@@ -405,8 +411,8 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: writeTitle,
+          slug: writeTitle.replace(/\s+/g, '-').toLowerCase() + '-' + Math.random().toString(36).substring(2, 7),
           content: writeContent,
-          categoryId: writeCategoryId,
           channelId: writeChannelId,
           tags: writeTags.split(',').map(t => t.trim()).filter(Boolean),
           excerpt: writeExcerpt || writeContent.slice(0, 200),
@@ -419,7 +425,6 @@ export default function AdminPage() {
         // 폼 초기화
         setWriteTitle('')
         setWriteContent('')
-        setWriteCategoryId('')
         setWriteChannelId('')
         setWriteTags('')
         setWriteExcerpt('')
@@ -454,7 +459,7 @@ export default function AdminPage() {
     { key: 'channels', label: '채널/게시글 관리', icon: '#' },
     { key: 'visitors', label: '방문자 추적', icon: '👥' },
     { key: 'seo', label: 'Google SEO', icon: '🔍' },
-    { key: 'naver', label: 'Naver SEO', icon: '🇰🇷' },
+    { key: 'naver', label: '방문자 인사이트 (Supabase)', icon: '📈' },
   ]
 
   return (
@@ -483,6 +488,7 @@ export default function AdminPage() {
       <div style={{
         display: 'flex', gap: 4, padding: '12px 24px',
         background: 'var(--dc-bg-secondary)', borderBottom: '1px solid var(--dc-separator)',
+        overflowX: 'auto', whiteSpace: 'nowrap'
       }}>
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
@@ -609,34 +615,8 @@ export default function AdminPage() {
                 />
               </div>
 
-              {/* 카테고리 & 채널 선택 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
-                    카테고리
-                  </label>
-                  <select
-                    value={writeCategoryId}
-                    onChange={(e) => setWriteCategoryId(Number(e.target.value))}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      border: '1px solid var(--dc-separator)',
-                      background: 'var(--dc-bg-secondary)',
-                      color: 'var(--dc-text-normal)',
-                      fontSize: 14,
-                      outline: 'none',
-                    }}
-                  >
-                    <option value="">카테고리 선택</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
+              {/* 채널 선택 */}
+              <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
                     채널
                   </label>
@@ -661,7 +641,6 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </div>
-              </div>
 
               {/* 태그 입력 */}
               <div style={{ marginBottom: 20 }}>
@@ -737,7 +716,7 @@ export default function AdminPage() {
 
                 <button
                   type="submit"
-                  disabled={writeLoading || !writeTitle || !writeContent || !writeCategoryId || !writeChannelId}
+                  disabled={writeLoading || !writeTitle || !writeContent || !writeChannelId}
                   style={{
                     padding: '12px 32px',
                     borderRadius: 4,
@@ -747,7 +726,7 @@ export default function AdminPage() {
                     fontSize: 16,
                     fontWeight: 700,
                     cursor: writeLoading ? 'not-allowed' : 'pointer',
-                    opacity: (!writeTitle || !writeContent || !writeCategoryId || !writeChannelId) ? 0.5 : 1,
+                    opacity: (!writeTitle || !writeContent || !writeChannelId) ? 0.5 : 1,
                   }}
                 >
                   {writeLoading ? '⏳ 작성 중...' : '📝 글 작성하기'}
@@ -786,8 +765,8 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'var(--dc-bg-tertiary)' }}>
                     <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700 }}>카테고리</th>
@@ -1054,166 +1033,110 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* NAVER SEARCH ADVISOR TAB */}
+        {/* VISITORS INSIGHTS TAB */}
         {tab === 'naver' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>🇰🇷 네이버 Search Advisor 실시간 데이터</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>📈 방문자 인사이트 (Supabase 트래픽 로그)</h2>
               <button
-                onClick={fetchNaverData}
-                disabled={naverLoading}
+                onClick={fetchInsightsData}
+                disabled={insightsLoading}
                 style={{
-                  padding: '10px 20px', borderRadius: 4, border: 'none', cursor: naverLoading ? 'not-allowed' : 'pointer',
-                  background: naverLoading ? 'var(--dc-text-muted)' : '#03c75a', color: '#fff',
-                  fontSize: 14, fontWeight: 600,
+                  background: 'var(--dc-brand)', color: '#fff', border: 'none',
+                  padding: '8px 16px', borderRadius: 4, cursor: insightsLoading ? 'not-allowed' : 'pointer',
+                  fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
                 }}
               >
-                {naverLoading ? '⏳ 로딩중...' : '📥 실시간 데이터 가져오기'}
+                {insightsLoading ? '⏳ 분석 중...' : '📊 실시간 데이터 집계'}
               </button>
             </div>
 
-            {naverError && (
-              <div style={{
-                background: 'rgba(237,66,69,0.1)', border: '1px solid var(--dc-text-danger)', borderRadius: 4,
-                padding: 12, marginBottom: 20, color: 'var(--dc-text-danger)', fontSize: 14
-              }}>
-                ⚠️ {naverError}
+            {insightsError && (
+              <div style={{ background: 'rgba(237,66,69,0.1)', color: 'var(--dc-text-danger)', padding: 16, borderRadius: 8, marginBottom: 20 }}>
+                {insightsError}
               </div>
             )}
 
-            {naverData ? (
-              <>
-                {/* Overview Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>총 노출수</div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
-                      {naverData.overview.totalExposures.toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버 검색 노출</div>
+            {insightsData ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
+                {/* 왼쪽: Pie Chart */}
+                <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>🤖 분류: 봇 vs 사용자</h3>
+                  
+                  <div style={{ height: 260 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: '실제 사용자', value: insightsData.overview.humanTraffic },
+                            { name: '봇/크롤러', value: insightsData.overview.botTraffic }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          <Cell fill={TRAFFIC_COLORS[0]} />
+                          <Cell fill={TRAFFIC_COLORS[1]} />
+                        </Pie>
+                        <RechartsTooltip 
+                          contentStyle={{ background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: 8, color: '#fff' }}
+                          itemStyle={{ color: '#fff' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36}/>
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>총 클릭수</div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
-                      {naverData.overview.totalClicks.toLocaleString()}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버에서 유입</div>
-                  </div>
-                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>평균 CTR</div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
-                      {naverData.overview.ctr}%
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>클릭률</div>
-                  </div>
-                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <div style={{ fontSize: 14, color: 'var(--dc-text-muted)', marginBottom: 8 }}>평균 순위</div>
-                    <div style={{ fontSize: 28, fontWeight: 700, color: '#03c75a' }}>
-                      {naverData.overview.avgPosition.toFixed(1)}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--dc-text-muted)', marginTop: 4 }}>네이버 검색 순위</div>
+                  <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--dc-text-muted)', marginTop: 8 }}>
+                    총 세션: {insightsData.overview.totalSessions.toLocaleString()}개 중 {(insightsData.overview.botTraffic / insightsData.overview.totalSessions * 100).toFixed(1)}%가 봇 트래픽입니다.
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-                  {/* Top Keywords Table */}
-                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>
-                      🔥 인기 검색어 TOP 10
-                    </h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                          <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>검색어</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>순위</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {naverData.topKeywords.map((kw, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                            <td style={{ padding: '10px 4px', fontSize: 13 }}>{kw.keyword}</td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
-                              {kw.exposures.toLocaleString()}
-                            </td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#03c75a' }}>
-                              {kw.clicks.toLocaleString()}
-                            </td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px' }}>
-                              <span style={{
-                                padding: '2px 8px', borderRadius: 10, fontSize: 13, fontWeight: 700,
-                                background: kw.position <= 3 ? '#3ba55d' : kw.position <= 10 ? '#faa81a' : '#ed4245',
-                                color: '#fff',
-                              }}>
-                                {kw.position.toFixed(1)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                {/* 오른쪽: 키워드 및 연쇄 이동 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* 키워드 */}
+                  <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20, flex: 1 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>🔍 인기 유입 키워드</h3>
+                    {insightsData.keywords.map((kw, i) => (
+                      <div key={i} style={{ marginBottom: 12 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 14 }}>{kw.keyword}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{kw.count}명</span>
+                        </div>
+                        <div style={{ height: 6, background: 'var(--dc-bg-accent)', borderRadius: 3 }}>
+                          <div style={{ height: '100%', width: `${kw.percentage}%`, background: COLORS[i % COLORS.length], borderRadius: 3 }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Top Pages Table */}
+                  {/* 이탈도 */}
                   <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>
-                      📄 인기 페이지 TOP 10
-                    </h3>
+                    <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'var(--dc-header-primary)' }}>📑 동일 사용자 다중 뷰</h3>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                          <th style={{ textAlign: 'left', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>페이지</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>클릭</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>노출</th>
-                          <th style={{ textAlign: 'right', padding: '8px 4px', fontSize: 12, color: 'var(--dc-text-muted)' }}>CTR</th>
-                        </tr>
-                      </thead>
                       <tbody>
-                        {naverData.topPages.map((page, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                            <td style={{ padding: '10px 4px', fontSize: 13, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {page.page}
-                            </td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: '#03c75a' }}>
-                              {page.clicks.toLocaleString()}
-                            </td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>
-                              {page.exposures.toLocaleString()}
-                            </td>
-                            <td style={{ textAlign: 'right', padding: '10px 4px', fontSize: 14 }}>
-                              {page.ctr.toFixed(2)}%
-                            </td>
+                        {insightsData.multiViews.map((mv, i) => (
+                          <tr key={i} style={{ borderBottom: i < insightsData.multiViews.length -1 ? '1px solid var(--dc-separator)' : 'none' }}>
+                            <td style={{ padding: '8px 4px', fontSize: 13 }}>{mv.pages}개 글 읽음</td>
+                            <td style={{ textAlign: 'right', padding: '8px 4px', fontSize: 14, color: 'var(--dc-text-muted)' }}>{mv.users.toLocaleString()}명</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 </div>
-
-                {/* Site Info */}
-                <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 16, marginTop: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ fontSize: 24 }}>🇰🇷</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)' }}>
-                        {naverData.siteInfo.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: 'var(--dc-text-muted)' }}>
-                        {naverData.siteInfo.url} • {naverData.siteInfo.status === 'verified' ? '✅ 인증됨' : '⏳ 인증 대기중'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
+              </div>
             ) : (
               <div style={{
                 background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 40,
                 textAlign: 'center', color: 'var(--dc-text-muted)',
               }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🇰🇷</div>
-                <div style={{ fontSize: 16, marginBottom: 8 }}>네이버 Search Advisor 데이터가 없습니다</div>
-                <div style={{ fontSize: 14 }}>위 버튼을 클릭하여 실시간 검색 데이터를 가져오세요</div>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+                <div style={{ fontSize: 16, marginBottom: 8 }}>Supabase 집계 데이터가 없습니다</div>
+                <div style={{ fontSize: 14 }}>상단 버튼을 클릭하여 진짜 방문자 트래픽을 불러오세요</div>
               </div>
             )}
           </div>

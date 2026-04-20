@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import DOMPurify from 'dompurify'
 
 interface MarkdownEditorProps {
   value: string
@@ -323,7 +324,7 @@ export function MarkdownEditor({
               color: 'var(--dc-text-normal)',
             }}
             dangerouslySetInnerHTML={{
-              __html: renderMarkdown(value),
+              __html: DOMPurify.sanitize(renderMarkdown(value)),
             }}
           />
         </div>

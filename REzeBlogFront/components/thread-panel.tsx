@@ -41,31 +41,48 @@ export function ThreadPanel() {
     fetchPosts()
   }, [])
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
+  return (
+    <>
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          style={{
+            position: 'absolute', right: 16, top: 56,
+            background: 'var(--dc-bg-secondary)', border: '1px solid var(--dc-separator)',
+            borderRadius: 4, padding: '6px 12px', color: 'var(--dc-interactive-normal)',
+            cursor: 'pointer', fontSize: 13, fontWeight: 600, zIndex: 10,
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}
+        >
+          🧵 스레드 {threads.length}
+        </button>
+      )}
+
+      {/* 모바일용 배경 어두워짐(백드롭) */}
+      <div 
+        onClick={() => setIsOpen(false)}
+        className="thread-backdrop"
         style={{
-          position: 'absolute', right: 16, top: 56,
-          background: 'var(--dc-bg-secondary)', border: '1px solid var(--dc-separator)',
-          borderRadius: 4, padding: '6px 12px', color: 'var(--dc-interactive-normal)',
-          cursor: 'pointer', fontSize: 13, fontWeight: 600, zIndex: 10,
-          display: 'flex', alignItems: 'center', gap: 4,
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 998,
+          opacity: isOpen ? 1 : 0, pointerEvents: isOpen ? 'auto' : 'none',
+          transition: 'opacity 0.2s ease',
+        }}
+      />
+
+      {/* 스레드 패널 본체 */}
+      <div 
+        className="thread-panel"
+        style={{
+          position: 'fixed', top: 0, right: 0, bottom: 0,
+          width: 320, zIndex: 999,
+          background: 'var(--dc-bg-secondary)',
+          borderLeft: '1px solid rgba(79, 84, 92, 0.29)',
+          boxShadow: 'var(--dc-elevation-high)',
+          display: 'flex', flexDirection: 'column',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       >
-        🧵 스레드 {threads.length}
-      </button>
-    )
-  }
-
-  return (
-    <div style={{
-      width: 280, minWidth: 280,
-      background: 'var(--dc-bg-secondary)',
-      borderLeft: '1px solid rgba(79, 84, 92, 0.29)',
-      display: 'flex', flexDirection: 'column',
-      flexShrink: 0,
-    }}>
       {/* Header */}
       <div style={{
         height: 48, padding: '0 16px',
@@ -164,5 +181,6 @@ export function ThreadPanel() {
         </div>
       </div>
     </div>
+    </>
   )
 }

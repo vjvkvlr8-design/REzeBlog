@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import DOMPurify from 'dompurify'
 
 interface MarkdownRendererProps {
   content: string
@@ -8,8 +9,17 @@ interface MarkdownRendererProps {
 }
 
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+  // XSS 방지: 입력 컨텐츠 사전 정화
+  const sanitizedContent = useMemo(() => {
+    if (typeof window === 'undefined') return content
+    return DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'code', 'pre'],
+      ALLOWED_ATTR: ['href', 'title', 'target']
+    })
+  }, [content])
+
   const renderedContent = useMemo(() => {
-    const lines = content.split('\n')
+    const lines = sanitizedContent.split('\n')
     const elements: JSX.Element[] = []
     let i = 0
     let listItems: string[] = []

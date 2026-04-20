@@ -170,86 +170,93 @@ export function CommentSection({
       )}
 
       {/* Comment Input Form - Discord Chat Input Style */}
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: '0 16px 24px', flexShrink: 0 }}>
         <form onSubmit={handleSubmit}>
-          {/* Nickname input */}
-          <div style={{ marginBottom: 8 }}>
+          {/* 닉네임 필드 (상단에 아주 작게) */}
+          <div style={{ marginBottom: 4 }}>
             <input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="닉네임 (선택사항)"
+              placeholder="닉네임 (미입력시 '방문자')"
               maxLength={20}
               style={{
-                width: '100%',
-                padding: '8px 12px',
-                background: 'var(--dc-bg-secondary)',
-                border: '1px solid var(--dc-separator)',
-                borderRadius: 4,
-                color: 'var(--dc-text-normal)',
-                fontSize: 13,
+                width: '120px', padding: '4px 8px',
+                background: 'transparent', border: '1px solid var(--dc-interactive-muted)',
+                borderRadius: 4, color: 'var(--dc-text-muted)', fontSize: 11,
                 outline: 'none',
               }}
             />
           </div>
 
-          {/* Comment textarea */}
-          <div style={{ position: 'relative' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: 'var(--dc-bg-accent)', borderRadius: 8,
+            padding: '8px 16px', minHeight: 44, position: 'relative'
+          }}>
+            {/* Left '+' button */}
+            <button
+              type="button"
+              style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: 'var(--dc-interactive-normal)', color: 'var(--dc-bg-secondary)',
+                border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 600, cursor: 'not-allowed', flexShrink: 0
+              }}
+              title="첨부파일 (개발중)"
+            >
+              +
+            </button>
+
+            {/* Textarea */}
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="이 스레드에 답장하기..."
-              maxLength={1000}
-              rows={3}
-              disabled={isSubmitting}
-              style={{
-                width: '100%',
-                padding: '12px 44px 12px 12px',
-                background: 'var(--dc-bg-secondary)',
-                border: '1px solid var(--dc-separator)',
-                borderRadius: 8,
-                color: 'var(--dc-text-normal)',
-                fontSize: 14,
-                lineHeight: 1.5,
-                resize: 'vertical',
-                outline: 'none',
-                fontFamily: 'inherit',
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
               }}
+              placeholder={`#게시글 에 메시지 보내기`}
+              disabled={isSubmitting}
+              maxLength={2000}
+              style={{
+                flex: 1, background: 'transparent', border: 'none', color: 'var(--dc-text-normal)',
+                fontSize: 15, lineHeight: 1.5, resize: 'none', outline: 'none', padding: '2px 0',
+                maxHeight: 120, fontFamily: 'inherit'
+              }}
+              rows={1}
             />
 
-            {/* Submit button */}
-            <button
-              type="submit"
-              disabled={!newComment.trim() || isSubmitting}
-              style={{
-                position: 'absolute',
-                right: 8,
-                bottom: 8,
-                padding: '6px 12px',
-                background: newComment.trim() && !isSubmitting ? 'var(--dc-accent)' : 'var(--dc-bg-tertiary)',
-                border: 'none',
-                borderRadius: 4,
-                color: '#fff',
-                fontSize: 13,
-                cursor: newComment.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
-                fontWeight: 600,
-              }}
-            >
-              {isSubmitting ? '⏳' : '보내기'}
-            </button>
+            {/* Right Side Icons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--dc-interactive-normal)', fontSize: 18 }}>
+              <span style={{ cursor: 'not-allowed' }} title="선물">🎁</span>
+              <span style={{ cursor: 'not-allowed' }} title="GIF">🖼️</span>
+              <span style={{ cursor: 'not-allowed' }} title="이모지">😃</span>
+              
+              {/* Send Button */}
+              <button
+                type="submit"
+                disabled={!newComment.trim() || isSubmitting}
+                style={{
+                  background: 'none', border: 'none',
+                  color: (!newComment.trim() || isSubmitting) ? 'var(--dc-interactive-muted)' : 'var(--dc-text-link)',
+                  fontSize: 18, cursor: (!newComment.trim() || isSubmitting) ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', padding: 0
+                }}
+                title="보내기 (Enter)"
+              >
+                📤
+              </button>
+            </div>
           </div>
-
-          {/* Error message */}
+          
           {error && (
-            <div style={{ marginTop: 8, color: 'var(--dc-red)', fontSize: 13 }}>
-              ⚠️ {error}
+            <div style={{ marginTop: 8, color: 'var(--dc-text-danger)', fontSize: 12, fontWeight: 600 }}>
+              {error}
             </div>
           )}
-
-          {/* Character count */}
-          <div style={{ marginTop: 4, textAlign: 'right', fontSize: 12, color: 'var(--dc-text-muted)' }}>
-            {newComment.length}/1000
-          </div>
         </form>
       </div>
     </div>
