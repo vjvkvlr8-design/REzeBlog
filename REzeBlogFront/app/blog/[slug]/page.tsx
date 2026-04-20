@@ -2,14 +2,16 @@
 // 새 탭에서 열림 (target="_blank")
 // 작성일: 2026-04-19 (Antigravity) - DB 연동 추가
 // 최적화: 2026-04-20 - MarkdownRenderer 컴포넌트 적용
+// 댓글 기능: 2026-04-20 - Discord 스타일 답장 UI 추가
 
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { db } from '@/lib/drizzle'
-import { posts, comments, reactions } from '@/db/schema'
+import { posts, comments, reactions, channels, categories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
+import { CommentSection } from '@/components/comment-section'
 
 // Fetch post from database
 async function getPost(slug: string) {
@@ -24,13 +26,31 @@ async function getPost(slug: string) {
     const postComments = await db.select().from(comments).where(eq(comments.postId, post.id))
     const postReactions = await db.select().from(reactions).where(eq(reactions.postId, post.id))
     
+    // Fetch channel and category names for SEO
+    let channelName = ''
+    let categoryName = ''
+    if (post.channelId) {
+      const channel = await db.select().from(channels).where(eq(channels.id, post.channelId)).limit(1)
+      if (channel[0]) {
+        channelName = channel[0].name
+        if (channel[0].categoryId) {
+          const category = await db.select().from(categories).where(eq(categories.id, channel[0].categoryId)).limit(1)
+          if (category[0]) categoryName = category[0].name
+        }
+      }
+    }
+    
     return {
       ...post,
+      id: post.id,
       date: post.createdAt.toISOString().split('T')[0],
       time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       content: post.content,
+      channel: channelName,
+      category: categoryName,
       reactions: postReactions.map((r) => ({ emoji: r.emoji, count: r.count })),
       replies: postComments.map((c) => ({
+        id: c.id,
         author: c.author,
         authorColor: c.authorColor,
         avatarBg: c.avatarBg,
@@ -49,11 +69,69 @@ type Props = { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getPost(params.slug)
-  if (!post) return { title: '게시글을 찾을 수 없습니다 | REzeBlog' }
+  if (!post) {
+    return {
+      title: '게시글을 찾을 수 없습니다 | REzeBlog',
+      description: '요청하신 게시글을 찾을 수 없습니다.',
+      openGraph: {
+        title: '게시글을 찾을 수 없습니다',
+        description: '요청하신 게시글을 찾을 수 없습니다.',
+        type: 'website',
+      },
+      robots: { index: false, follow: false },
+    }
+  }
+
+  const title = post.title
+  const description = post.excerpt || post.content.slice(0, 200).replace(/\n/g, ' ')
+  const url = `https://rezeblog.vercel.app/blog/${params.slug}`
+  
+  // Extract image from markdown content
+  const imageMatch = post.content.match(/!\[.*?\]\((https?:\/\/[^)]+)\)/)
+  const ogImage = imageMatch ? imageMatch[1] : 'https://rezeblog.vercel.app/og-default.png'
+
   return {
-    title: `${post.title} | REzeBlog`,
-    description: post.excerpt || post.content.slice(0, 200),
-    openGraph: { title: post.title, description: post.excerpt || post.content.slice(0, 200), type: 'article' },
+    title: `${title} | REzeBlog`,
+    description,
+    keywords: [post.category, post.channel, '블로그', 'REzeBlog', 'Discord 스타일'].filter(Boolean),
+    authors: [{ name: post.author }],
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'REzeBlog',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      locale: 'ko_KR',
+      type: 'article',
+      publishedTime: post.createdAt?.toISOString(),
+      modifiedTime: post.updatedAt?.toISOString(),
+      section: post.category,
+      tags: [post.category, post.channel].filter(Boolean),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+      creator: '@rezeblog',
+    },
+    alternates: {
+      canonical: url,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   }
 }
 
@@ -111,48 +189,27 @@ export default async function PostPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Replies */}
-        {post.replies.length > 0 && (
-          <>
-            <div className="date-separator">
-              <div className="date-separator-line" />
-              <span className="date-separator-text">댓글 {post.replies.length}개</span>
-              <div className="date-separator-line" />
-            </div>
-            {post.replies.map((reply, i) => (
-              <div key={i} className="message message-first">
-                <div className={`message-avatar ${reply.avatarBg}`}>{reply.avatarLetter}</div>
-                <div className="message-reply">
-                  <div className="message-reply-avatar" style={{ background: post.authorColor }}>{post.avatarLetter}</div>
-                  <span className="message-reply-name">{post.author}</span>
-                  <span className="message-reply-text">{post.title}</span>
-                </div>
-                <div className="message-header">
-                  <span className="message-username" style={{ color: reply.authorColor }}>{reply.author}</span>
-                  <span className="message-timestamp">{reply.time}</span>
-                </div>
-                <div className="message-content">{reply.content}</div>
-              </div>
-            ))}
-          </>
-        )}
-
-        {/* Comment input hint */}
-        <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-          <p style={{ color: 'var(--dc-text-muted)', fontSize: 13 }}>
-            💬 댓글 기능은 준비 중입니다
-          </p>
-        </div>
+        {/* Comments - Discord Style Reply UI */}
+        <CommentSection
+          postId={post.id}
+          postAuthor={post.author}
+          postAuthorColor={post.authorColor}
+          postAvatarLetter={post.avatarLetter}
+          initialComments={post.replies.map((reply) => ({
+            id: reply.id,
+            postId: post.id,
+            author: reply.author,
+            authorColor: reply.authorColor,
+            avatarBg: reply.avatarBg,
+            avatarLetter: reply.avatarLetter,
+            content: reply.content,
+            createdAt: new Date().toISOString(),
+          }))}
+        />
       </div>
 
-      {/* Chat Input */}
-      <div className="chat-input-wrapper">
-        <div className="chat-input">
-          <span className="chat-input-icon">＋</span>
-          <span className="chat-input-placeholder">이 스레드에 답장하기...</span>
-          <span className="chat-input-icon">😀</span>
-        </div>
-      </div>
+      {/* Footer spacing */}
+      <div style={{ height: 24 }} />
     </>
   )
 }
