@@ -1,6 +1,7 @@
 // 게시글 상세 페이지 = Discord 스레드 형태
 // 새 탭에서 열림 (target="_blank")
 // 작성일: 2026-04-19 (Antigravity) - DB 연동 추가
+// 최적화: 2026-04-20 - MarkdownRenderer 컴포넌트 적용
 
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -8,6 +9,7 @@ import { notFound } from 'next/navigation'
 import { db } from '@/lib/drizzle'
 import { posts, comments, reactions } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { MarkdownRenderer } from '@/components/markdown-renderer'
 
 // Fetch post from database
 async function getPost(slug: string) {
@@ -26,7 +28,7 @@ async function getPost(slug: string) {
       ...post,
       date: post.createdAt.toISOString().split('T')[0],
       time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      fullContent: post.content.split('\n'),
+      content: post.content,
       reactions: postReactions.map((r) => ({ emoji: r.emoji, count: r.count })),
       replies: postComments.map((c) => ({
         author: c.author,
@@ -65,19 +67,6 @@ export async function generateStaticParams() {
   }
 }
 
-function renderLine(line: string, idx: number) {
-  if (line.startsWith('## ')) return <h2 key={idx} style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)', margin: '16px 0 8px' }}>{line.slice(3)}</h2>
-  if (line.startsWith('### ')) return <h3 key={idx} style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', margin: '12px 0 4px' }}>{line.slice(4)}</h3>
-  if (line.startsWith('```')) return <div key={idx} style={{ background: 'var(--dc-bg-secondary)', padding: '8px 12px', borderRadius: 4, fontFamily: 'monospace', fontSize: 14, margin: '4px 0', color: 'var(--dc-text-normal)' }}>{line.slice(3) || ' '}</div>
-  if (line.startsWith('- ')) return <div key={idx} style={{ paddingLeft: 16, color: 'var(--dc-text-normal)', lineHeight: 1.6 }}>• {line.slice(2)}</div>
-  if (line.match(/^\d+\. /)) return <div key={idx} style={{ paddingLeft: 16, color: 'var(--dc-text-normal)', lineHeight: 1.6 }}>{line}</div>
-  if (line === '') return <div key={idx} style={{ height: 8 }} />
-  // Bold handling
-  const parts = line.split(/\*\*(.*?)\*\*/)
-  return <p key={idx} style={{ color: 'var(--dc-text-normal)', lineHeight: 1.6 }}>
-    {parts.map((part, i) => i % 2 === 1 ? <strong key={i} style={{ color: 'var(--dc-header-primary)' }}>{part}</strong> : part)}
-  </p>
-}
 
 export default async function PostPage({ params }: Props) {
   const post = await getPost(params.slug)
@@ -109,7 +98,7 @@ export default async function PostPage({ params }: Props) {
             <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--dc-header-primary)', marginBottom: 12 }}>
               {post.title}
             </div>
-            {post.fullContent.map((line, i) => renderLine(line, i))}
+            <MarkdownRenderer content={post.content} />
           </div>
         </div>
 
