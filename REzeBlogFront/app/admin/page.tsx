@@ -7,8 +7,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Modal } from '@/components/admin/modal'
+import { MarkdownEditor } from '@/components/admin/markdown-editor'
 
-type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver'
+type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver' | 'write'
 
 // Google Search Console 데이터 타입
 interface SearchConsoleData {
@@ -96,6 +97,17 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [modalError, setModalError] = useState('')
   const [modalLoading, setModalLoading] = useState(false)
+
+  // 글쓰기 상태
+  const [writeTitle, setWriteTitle] = useState('')
+  const [writeContent, setWriteContent] = useState('')
+  const [writeCategoryId, setWriteCategoryId] = useState<number | ''>('')
+  const [writeChannelId, setWriteChannelId] = useState<number | ''>('')
+  const [writeTags, setWriteTags] = useState('')
+  const [writeExcerpt, setWriteExcerpt] = useState('')
+  const [writePublished, setWritePublished] = useState(true)
+  const [writeLoading, setWriteLoading] = useState(false)
+  const [writeSuccess, setWriteSuccess] = useState(false)
 
   // Search Console 데이터 가져오기
   const fetchSearchConsole = async () => {
@@ -381,6 +393,49 @@ export default function AdminPage() {
     router.push('/admin/login')
   }
 
+  // 글쓰기 제출
+  const handleWriteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setWriteLoading(true)
+    setWriteSuccess(false)
+
+    try {
+      const res = await fetch('/api/admin/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: writeTitle,
+          content: writeContent,
+          categoryId: writeCategoryId,
+          channelId: writeChannelId,
+          tags: writeTags.split(',').map(t => t.trim()).filter(Boolean),
+          excerpt: writeExcerpt || writeContent.slice(0, 200),
+          published: writePublished,
+        }),
+      })
+
+      if (res.ok) {
+        setWriteSuccess(true)
+        // 폼 초기화
+        setWriteTitle('')
+        setWriteContent('')
+        setWriteCategoryId('')
+        setWriteChannelId('')
+        setWriteTags('')
+        setWriteExcerpt('')
+        setWritePublished(true)
+        // 3초 후 성공 메시지 제거
+        setTimeout(() => setWriteSuccess(false), 3000)
+      } else {
+        alert('글 작성에 실패했습니다.')
+      }
+    } catch {
+      alert('글 작성 중 오류가 발생했습니다.')
+    } finally {
+      setWriteLoading(false)
+    }
+  }
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--dc-bg-tertiary)', color: 'var(--dc-text-normal)' }}>
       로딩 중...
@@ -395,6 +450,7 @@ export default function AdminPage() {
 
   const tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', label: '대시보드', icon: '📊' },
+    { key: 'write', label: '✍️ 글쓰기', icon: '✍️' },
     { key: 'channels', label: '채널/게시글 관리', icon: '#' },
     { key: 'visitors', label: '방문자 추적', icon: '👥' },
     { key: 'seo', label: 'Google SEO', icon: '🔍' },
@@ -506,6 +562,198 @@ export default function AdminPage() {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* WRITE TAB - Markdown Editor */}
+        {tab === 'write' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>✍️ 새 글 작성</h2>
+              {writeSuccess && (
+                <span style={{
+                  padding: '8px 16px',
+                  background: 'rgba(59,165,93,0.2)',
+                  color: '#3ba55d',
+                  borderRadius: 4,
+                  fontSize: 14,
+                  fontWeight: 600,
+                }}>
+                  ✅ 글이 성공적으로 작성되었습니다!
+                </span>
+              )}
+            </div>
+
+            <form onSubmit={handleWriteSubmit}>
+              {/* 제목 입력 */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                  제목
+                </label>
+                <input
+                  type="text"
+                  value={writeTitle}
+                  onChange={(e) => setWriteTitle(e.target.value)}
+                  placeholder="글 제목을 입력하세요"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--dc-separator)',
+                    background: 'var(--dc-bg-secondary)',
+                    color: 'var(--dc-text-normal)',
+                    fontSize: 16,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* 카테고리 & 채널 선택 */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                    카테고리
+                  </label>
+                  <select
+                    value={writeCategoryId}
+                    onChange={(e) => setWriteCategoryId(Number(e.target.value))}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      border: '1px solid var(--dc-separator)',
+                      background: 'var(--dc-bg-secondary)',
+                      color: 'var(--dc-text-normal)',
+                      fontSize: 14,
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">카테고리 선택</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                    채널
+                  </label>
+                  <select
+                    value={writeChannelId}
+                    onChange={(e) => setWriteChannelId(Number(e.target.value))}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      borderRadius: 8,
+                      border: '1px solid var(--dc-separator)',
+                      background: 'var(--dc-bg-secondary)',
+                      color: 'var(--dc-text-normal)',
+                      fontSize: 14,
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="">채널 선택</option>
+                    {channels.map((ch) => (
+                      <option key={ch.id} value={ch.id}>{ch.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* 태그 입력 */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                  태그 (쉼표로 구분)
+                </label>
+                <input
+                  type="text"
+                  value={writeTags}
+                  onChange={(e) => setWriteTags(e.target.value)}
+                  placeholder="예: Next.js, React, SEO"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--dc-separator)',
+                    background: 'var(--dc-bg-secondary)',
+                    color: 'var(--dc-text-normal)',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* 요약 (자동 생성 가능) */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                  요약 (미입력시 자동 생성)
+                </label>
+                <input
+                  type="text"
+                  value={writeExcerpt}
+                  onChange={(e) => setWriteExcerpt(e.target.value)}
+                  placeholder="글의 간단한 요약을 입력하세요"
+                  maxLength={200}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--dc-separator)',
+                    background: 'var(--dc-bg-secondary)',
+                    color: 'var(--dc-text-normal)',
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Markdown Editor */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--dc-header-primary)', marginBottom: 8 }}>
+                  본문 (Markdown 지원)
+                </label>
+                <MarkdownEditor
+                  value={writeContent}
+                  onChange={setWriteContent}
+                  placeholder="마크다운으로 글을 작성하세요...&#10;&#10;## 기능 안내&#10;- **굵게**: Ctrl+B 또는 **텍스트**&#10;- *기울임*: Ctrl+I 또는 *텍스트*&#10;- `코드`: 백틱으로 감싸기&#10;- ```코드블록```: 백틱 3개&#10;- 이미지: 드래그앤드롭 또는 📷 버튼"
+                  minHeight={400}
+                />
+              </div>
+
+              {/* 발행 옵션 & 제출 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={writePublished}
+                    onChange={(e) => setWritePublished(e.target.checked)}
+                    style={{ width: 20, height: 20, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: 14, color: 'var(--dc-text-normal)' }}>즉시 발행</span>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={writeLoading || !writeTitle || !writeContent || !writeCategoryId || !writeChannelId}
+                  style={{
+                    padding: '12px 32px',
+                    borderRadius: 4,
+                    border: 'none',
+                    background: writeLoading ? 'var(--dc-text-muted)' : 'var(--dc-brand)',
+                    color: '#fff',
+                    fontSize: 16,
+                    fontWeight: 700,
+                    cursor: writeLoading ? 'not-allowed' : 'pointer',
+                    opacity: (!writeTitle || !writeContent || !writeCategoryId || !writeChannelId) ? 0.5 : 1,
+                  }}
+                >
+                  {writeLoading ? '⏳ 작성 중...' : '📝 글 작성하기'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

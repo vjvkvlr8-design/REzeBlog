@@ -9,8 +9,23 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 interface GameState {
   stage: string
   text: string[]
-  choices: { label: string; emoji: string; nextStage: string; disabled?: boolean }[]
+  choices: { label: string; emoji: string; nextStage: string; disabled?: boolean; condition?: (state: GameProgress) => boolean }[]
   turn: number
+  onEnter?: (state: GameProgress) => void
+}
+
+interface GameProgress {
+  currentStage: string
+  turn: number
+  inventory: string[]
+  health: number
+  sanity: number
+  discovered: string[]
+  flags: Record<string, boolean>
+}
+
+interface SaveData extends GameProgress {
+  timestamp: number
 }
 
 interface SaveSlot {
@@ -21,18 +36,38 @@ interface SaveSlot {
   savedAt: string
 }
 
-const STORAGE_KEY = 'rezeblog-game-save'
+const STORAGE_KEY = 'rezeblog-game-v2'
+
+const INITIAL_PROGRESS: GameProgress = {
+  currentStage: 'intro',
+  turn: 1,
+  inventory: [],
+  health: 100,
+  sanity: 100,
+  discovered: [],
+  flags: {},
+}
 
 const gameData: Record<string, GameState> = {
   intro: {
     stage: 'intro',
-    text: ['주변은 온통 어둠입니다.', '아무것도 보이지 않습니다...'],
+    text: ['주변은 온통 어둠입니다.', '아무것도 보이지 않습니다...', '손에 무언가 작은 물건이 들려 있습니다.'],
     choices: [
       { label: '불을 밝힌다', emoji: '🔥', nextStage: 'light' },
       { label: '기다린다', emoji: '⏳', nextStage: 'wait' },
-      { label: '???', emoji: '❓', nextStage: '', disabled: true },
+      { label: '물건을 확인한다', emoji: '🎒', nextStage: 'check-item' },
     ],
     turn: 1,
+  },
+  'check-item': {
+    stage: 'check-item',
+    text: ['손에는 작은 라이터가 들려 있습니다.', '라이터를 얻었습니다!'],
+    choices: [
+      { label: '라이터로 불을 밝힌다', emoji: '🔥', nextStage: 'light' },
+      { label: '어둠 속에서 기다린다', emoji: '⏳', nextStage: 'wait' },
+    ],
+    turn: 1,
+    onEnter: (state) => { state.inventory.push('라이터'); state.discovered.push('라이터'); },
   },
   light: {
     stage: 'light',
@@ -40,6 +75,7 @@ const gameData: Record<string, GameState> = {
     choices: [
       { label: '컴퓨터를 확인한다', emoji: '💻', nextStage: 'computer' },
       { label: '주변을 더 살핀다', emoji: '👀', nextStage: 'look' },
+      { label: '책상 서랍을 연다', emoji: '🗄️', nextStage: 'drawer' },
     ],
     turn: 2,
   },
@@ -49,8 +85,20 @@ const gameData: Record<string, GameState> = {
     choices: [
       { label: '소리를 따라간다', emoji: '👂', nextStage: 'computer' },
       { label: '가만히 있는다', emoji: '🧘', nextStage: 'intro' },
+      { label: '라이터를 켠다', emoji: '🔥', nextStage: 'light', condition: (s) => s.inventory.includes('라이터') },
     ],
     turn: 2,
+    onEnter: (state) => { state.sanity -= 5; },
+  },
+  drawer: {
+    stage: 'drawer',
+    text: ['서랍 안에서 낡은 USB를 발견했습니다.', 'USB에 "SECRET_KEY"라고 적혀 있습니다.'],
+    choices: [
+      { label: 'USB를 챙긴다', emoji: '💾', nextStage: 'light' },
+      { label: '무시하고 컴퓨터로 간다', emoji: '💻', nextStage: 'computer' },
+    ],
+    turn: 2,
+    onEnter: (state) => { state.inventory.push('SECRET_KEY USB'); state.discovered.push('SECRET_KEY'); },
   },
   computer: {
     stage: 'computer',
@@ -60,9 +108,100 @@ const gameData: Record<string, GameState> = {
       '"블로그 게시글을 읽으며 이야기를 발견하세요"',
     ],
     choices: [
+      { label: 'USB를 꽂는다', emoji: '💾', nextStage: 'usb-insert', condition: (s) => s.inventory.includes('SECRET_KEY USB') },
+      { label: '터미널을 연다', emoji: '⌨️', nextStage: 'terminal' },
       { label: '블로그로 돌아간다', emoji: '📖', nextStage: 'intro' },
     ],
     turn: 3,
+  },
+  'usb-insert': {
+    stage: 'usb-insert',
+    text: ['USB를 꽂자 화면이 바뀝니다.', '"관리자 모드 접근 허용"', '"숨겨진 게시글을 확인하세요"'],
+    choices: [
+      { label: '숨겨진 게시글 확인', emoji: '🔓', nextStage: 'secret-posts' },
+      { label: '로그아웃', emoji: '🚪', nextStage: 'computer' },
+    ],
+    turn: 4,
+    onEnter: (state) => { state.flags['admin_mode'] = true; state.discovered.push('관리자 모드'); },
+  },
+  terminal: {
+    stage: 'terminal',
+    text: ['터미널이 열립니다.', '> _', '명령어를 입력하세요:'],
+    choices: [
+      { label: 'help', emoji: '❓', nextStage: 'terminal-help' },
+      { label: 'ls -la', emoji: '📂', nextStage: 'terminal-ls' },
+      { label: 'exit', emoji: '🚪', nextStage: 'computer' },
+    ],
+    turn: 4,
+  },
+  'terminal-help': {
+    stage: 'terminal-help',
+    text: ['사용 가능한 명령어:', '- help: 도움말', '- ls: 파일 목록', '- cat: 파일 내용 보기', '- exit: 종료'],
+    choices: [
+      { label: 'ls 입력', emoji: '📂', nextStage: 'terminal-ls' },
+      { label: 'exit 입력', emoji: '🚪', nextStage: 'computer' },
+    ],
+    turn: 5,
+  },
+  'terminal-ls': {
+    stage: 'terminal-ls',
+    text: ['drwxr-xr-x  posts/', '-rw-r--r--  secret.txt', '-rw-r--r--  readme.md'],
+    choices: [
+      { label: 'cat secret.txt', emoji: '🔐', nextStage: 'terminal-secret' },
+      { label: 'exit', emoji: '🚪', nextStage: 'computer' },
+    ],
+    turn: 5,
+  },
+  'terminal-secret': {
+    stage: 'terminal-secret',
+    text: ['"비밀번호: REzeBlog2026"', '"이 비밀번호는 어딘가에서 사용됩니다..."'],
+    choices: [
+      { label: '비밀번호를 기록한다', emoji: '📝', nextStage: 'computer' },
+      { label: 'exit', emoji: '🚪', nextStage: 'computer' },
+    ],
+    turn: 5,
+    onEnter: (state) => { state.flags['know_password'] = true; state.discovered.push('비밀번호'); },
+  },
+  'secret-posts': {
+    stage: 'secret-posts',
+    text: ['숨겨진 게시글 목록:', '1. [완전한 진실]', '2. [시스템의 끝]', '3. [돌아가기]'],
+    choices: [
+      { label: '완전한 진실 읽기', emoji: '📜', nextStage: 'truth-ending' },
+      { label: '시스템의 끝 읽기', emoji: '🔚', nextStage: 'system-ending' },
+      { label: '돌아가기', emoji: '⬅️', nextStage: 'computer' },
+    ],
+    turn: 5,
+  },
+  'truth-ending': {
+    stage: 'truth-ending',
+    text: [
+      '"당신은 이제 모든 것을 알게 되었습니다."',
+      '"REzeBlog는 단순한 블로그가 아닙니다."',
+      '"당신의 선택이 이야기를 만들어갑니다."',
+      '',
+      '🎉 [진실의 엔딩 달성]',
+      '발견한 것들:',
+    ],
+    choices: [
+      { label: '처음부터 다시', emoji: '🔄', nextStage: 'intro' },
+    ],
+    turn: 6,
+    onEnter: (state) => { state.flags['true_ending'] = true; state.health = 100; state.sanity = 100; },
+  },
+  'system-ending': {
+    stage: 'system-ending',
+    text: [
+      '"시스템을 종료합니다..."',
+      '"당신은 이 시뮬레이션의 일부였습니다."',
+      '"이제 깨어날 시간입니다."',
+      '',
+      '⚠️ [시스템 종료 엔딩 달성]',
+    ],
+    choices: [
+      { label: '시스템 재부팅', emoji: '🔄', nextStage: 'intro' },
+    ],
+    turn: 6,
+    onEnter: (state) => { state.flags['system_ending'] = true; state.health = 50; state.sanity = 0; },
   },
   look: {
     stage: 'look',
@@ -72,6 +211,7 @@ const gameData: Record<string, GameState> = {
       { label: '처음부터', emoji: '🔄', nextStage: 'intro' },
     ],
     turn: 3,
+    onEnter: (state) => { state.discovered.push('개발 메모'); },
   },
 }
 
