@@ -7,7 +7,7 @@ import { eq, asc } from 'drizzle-orm'
 const FALLBACK_CATEGORIES = [
   {
     id: 1,
-    name: '▼ 환영',
+    name: '환영',
     slug: 'welcome',
     order: 0,
     createdAt: new Date(),
@@ -18,7 +18,7 @@ const FALLBACK_CATEGORIES = [
   },
   {
     id: 2,
-    name: '▼ 개발',
+    name: '개발',
     slug: 'dev',
     order: 1,
     createdAt: new Date(),
@@ -30,7 +30,7 @@ const FALLBACK_CATEGORIES = [
   },
   {
     id: 3,
-    name: '▼ 커뮤니티',
+    name: '커뮤니티',
     slug: 'community',
     order: 2,
     createdAt: new Date(),
