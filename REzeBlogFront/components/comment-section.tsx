@@ -34,6 +34,10 @@ function generateRandomAvatar() {
   }
 }
 
+import { MarkdownRenderer } from './markdown-renderer'
+
+// ...
+
 export function CommentSection({
   postId,
   postAuthor,
@@ -333,7 +337,9 @@ export function CommentSection({
               </div>
 
               {/* Comment content */}
-              <div className="message-content">{comment.content}</div>
+              <div className="message-content">
+                <MarkdownRenderer content={comment.content} />
+              </div>
 
               {/* Avatar positioned absolutely like Discord */}
               <div className={`message-avatar ${comment.avatarBg}`} style={{ position: 'absolute', left: 16, top: 8 }}>
@@ -365,9 +371,9 @@ export function CommentSection({
                 ) : (
                   <>
                     <div style={{ background: 'rgba(47, 49, 54, 0.6)', padding: '8px 12px', borderRadius: '4px', borderLeft: `4px solid ${comment.authorColor}` }}>
-                      <p style={{ margin: 0, color: 'var(--dc-text-normal)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', lineHeight: '1.4' }}>
-                        {comment.content}
-                      </p>
+                      <div style={{ margin: 0, color: 'var(--dc-text-normal)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', lineHeight: '1.4' }}>
+                        <MarkdownRenderer content={comment.content} />
+                      </div>
                     </div>
                     
                     {/* Modify & Delete logic for comments */}
