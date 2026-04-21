@@ -258,13 +258,23 @@ export function CommentSection({
                 </div>
                 
                 {/* Delete Button */}
-                <button 
-                  onClick={() => handleDeleteClick(comment.id)}
-                  style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
-                  title="수정/삭제"
-                >
-                  [수정/삭제]
-                </button>
+                {/* Modify & Delete logic for comments */}
+                <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
+                  <button
+                    onClick={() => alert('댓글 수정 기능은 구현 중입니다.')}
+                    style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+                    title="댓글 수정"
+                  >
+                    [수정]
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(comment.id)}
+                    style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+                    title="댓글 삭제"
+                  >
+                    [삭제]
+                  </button>
+                </div>
               </div>
 
               {/* Comment content */}

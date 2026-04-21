@@ -50,15 +50,28 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
     }
   }
 
+  const handleEditClick = () => {
+    alert('수정 기능은 현재 구현 중입니다.')
+  }
+
   return (
     <>
-      <button 
-        onClick={handleDeleteClick}
-        style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
-        title="수정/삭제"
-      >
-        [게시글 삭제]
-      </button>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        <button 
+          onClick={handleEditClick}
+          style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+          title="게시글 수정"
+        >
+          [수정]
+        </button>
+        <button 
+          onClick={handleDeleteClick}
+          style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+          title="게시글 삭제"
+        >
+          [삭제]
+        </button>
+      </div>
 
       {deleteModalOpen && (
         <div style={{
