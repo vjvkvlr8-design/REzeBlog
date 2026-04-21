@@ -43,6 +43,7 @@ export function CommentSection({
 }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments)
   const [newComment, setNewComment] = useState('')
+  const [attachments, setAttachments] = useState<{id: string, data: string}[]>([])
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
   const [userLevel, setUserLevel] = useState(4)
@@ -55,6 +56,22 @@ export function CommentSection({
   const [commentToDelete, setCommentToDelete] = useState<number | null>(null)
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
+
+  // Edit State
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editPassword, setEditPassword] = useState('')
+  const [editAttachments, setEditAttachments] = useState<{id: string, data: string}[]>([])
+
+  const extractImages = (text: string) => {
+    const extracted: {id: string, data: string}[] = []
+    const newText = text.replace(/!\[.*?\]\((data:image\/[^;]+;base64,[^\)]+)\)/g, (match, data) => {
+      const id = Math.random().toString(36).substr(2, 6)
+      extracted.push({ id, data })
+      return `[사진: ${id}]`
+    })
+    return { newText, extracted }
+  }
 
   // State for plus menu
   const [showPlusMenu, setShowPlusMenu] = useState(false)
@@ -132,9 +149,11 @@ export function CommentSection({
         ctx?.drawImage(img, 0, 0, width, height)
         
         const base64 = canvas.toDataURL('image/jpeg', 0.6)
-        const insertText = `![업로드된 이미지](${base64})`
+        const imgId = Math.random().toString(36).substr(2, 6)
+        const imgTag = `\n[사진: ${imgId}]\n`
         
-        setNewComment((prev) => prev + (prev.trim() ? '\n' : '') + insertText + '\n')
+        setAttachments(prev => [...prev, { id: imgId, data: base64 }])
+        setNewComment((prev) => prev + imgTag)
         
         setTimeout(() => {
           textareaRef.current?.focus()
@@ -158,6 +177,11 @@ export function CommentSection({
     setIsSubmitting(true)
     setError('')
 
+    let finalContent = newComment.trim()
+    attachments.forEach(att => {
+      finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+    })
+
     const avatar = generateRandomAvatar()
 
     try {
@@ -166,7 +190,7 @@ export function CommentSection({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           postId,
-          content: newComment.trim(),
+          content: finalContent,
           authorNickname: nickname || '방문자',
           authorPassword: password, // For guests
           isAuth: userLevel !== 4
@@ -177,6 +201,7 @@ export function CommentSection({
         const comment = await res.json()
         setComments((prev) => [comment, ...prev])
         setNewComment('')
+        setAttachments([])
       } else {
         const err = await res.json()
         setError(err.error || '댓글 작성에 실패했습니다')
@@ -202,7 +227,56 @@ export function CommentSection({
     } else {
       // Guest needs password
       setCommentToDelete(id)
+      setDeletePassword('')
+      setDeleteError('')
       setDeleteModalOpen(true)
+    }
+  }
+
+  const handleEditClick = (id: number, content: string) => {
+    const { newText, extracted } = extractImages(content)
+    setEditingCommentId(id)
+    setEditContent(newText)
+    setEditAttachments(extracted)
+    setEditPassword('')
+  }
+
+  const handleEditCancel = () => {
+    setEditingCommentId(null)
+    setEditContent('')
+    setEditAttachments([])
+    setEditPassword('')
+  }
+
+  const handleEditSave = async (id: number) => {
+    if (!editContent.trim()) return
+
+    let finalContent = editContent.trim()
+    editAttachments.forEach(att => {
+      finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+    })
+
+    try {
+      const res = await fetch('/api/comments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          content: finalContent,
+          password: editPassword
+        }),
+      })
+
+      if (res.ok) {
+        setComments(prev => prev.map(c => c.id === id ? { ...c, content: finalContent } : c))
+        setEditingCommentId(null)
+        setEditAttachments([])
+      } else {
+        const err = await res.json()
+        alert(err.error || '수정에 실패했습니다')
+      }
+    } catch {
+      alert('수정 중 오류가 발생했습니다')
     }
   }
 
@@ -256,25 +330,6 @@ export function CommentSection({
                   </span>
                   <span className="message-timestamp">{formatTime(comment.createdAt)}</span>
                 </div>
-                
-                {/* Delete Button */}
-                {/* Modify & Delete logic for comments */}
-                <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto' }}>
-                  <button
-                    onClick={() => alert('댓글 수정 기능은 구현 중입니다.')}
-                    style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
-                    title="댓글 수정"
-                  >
-                    [수정]
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(comment.id)}
-                    style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
-                    title="댓글 삭제"
-                  >
-                    [삭제]
-                  </button>
-                </div>
               </div>
 
               {/* Comment content */}
@@ -283,6 +338,57 @@ export function CommentSection({
               {/* Avatar positioned absolutely like Discord */}
               <div className={`message-avatar ${comment.avatarBg}`} style={{ position: 'absolute', left: 16, top: 8 }}>
                 {comment.avatarLetter}
+              </div>
+
+              <div style={{ marginLeft: 52 }}>
+                {editingCommentId === comment.id ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', marginBottom: '8px' }}>
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      style={{ width: '100%', background: 'var(--dc-bg-tertiary)', border: '1px solid var(--dc-bg-accent)', borderRadius: '4px', color: 'var(--dc-text-normal)', padding: '8px', minHeight: '60px', resize: 'vertical' }}
+                    />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {userLevel === 4 && (
+                        <input
+                          type="password"
+                          placeholder="수정용 비밀번호"
+                          value={editPassword}
+                          onChange={(e) => setEditPassword(e.target.value)}
+                          style={{ background: 'var(--dc-bg-tertiary)', border: 'none', padding: '6px 10px', borderRadius: '4px', color: 'var(--dc-text-normal)', fontSize: '12px' }}
+                        />
+                      )}
+                      <button onClick={handleEditCancel} style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', cursor: 'pointer', fontSize: '12px' }}>취소</button>
+                      <button onClick={() => handleEditSave(comment.id)} style={{ background: 'var(--dc-brand)', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>저장</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ background: 'rgba(47, 49, 54, 0.6)', padding: '8px 12px', borderRadius: '4px', borderLeft: `4px solid ${comment.authorColor}` }}>
+                      <p style={{ margin: 0, color: 'var(--dc-text-normal)', whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '14px', lineHeight: '1.4' }}>
+                        {comment.content}
+                      </p>
+                    </div>
+                    
+                    {/* Modify & Delete logic for comments */}
+                    <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto', marginTop: '4px' }}>
+                      <button
+                        onClick={() => handleEditClick(comment.id, comment.content)}
+                        style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+                        title="댓글 수정"
+                      >
+                        [수정]
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(comment.id)}
+                        style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+                        title="댓글 삭제"
+                      >
+                        [삭제]
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           ))}

@@ -169,3 +169,66 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: '서버 오류 발생' }, { status: 500 })
   }
 }
+
+// PUT /api/comments - Update a comment by ID
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json()
+    const { id, content, password } = body
+
+    if (!id || !content) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Check token
+    const cookieStore = require('next/headers').cookies()
+    const token = cookieStore.get('auth_token')?.value
+    const user = token ? await verifyToken(token) : null
+
+    // Find the comment
+    const commentRecord = await db.select().from(comments).where(eq(comments.id, parseInt(id))).limit(1)
+    if (commentRecord.length === 0) {
+      return NextResponse.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    const commentToEdit = commentRecord[0]
+
+    // Level 0: Admin (skip checks)
+    if (user?.level === 0) {
+      // Allowed
+    } 
+    // Level 3: Member (check author name matches user nickname)
+    else if (user?.level === 3) {
+      if (commentToEdit.author !== user.nickname) {
+        return NextResponse.json({ error: '본인의 댓글만 수정할 수 있습니다.' }, { status: 403 })
+      }
+    } 
+    // Level 4: Guest (check password)
+    else {
+      if (!password) {
+        return NextResponse.json({ error: '비밀번호를 입력해주세요.' }, { status: 403 })
+      }
+      if (!commentToEdit.authorPassword) {
+        return NextResponse.json({ error: '비밀번호가 설정되지 않은 이전 댓글입니다. 관리자에게 문의하세요.' }, { status: 403 })
+      }
+      
+      const crypto = await import('crypto')
+      const hashedAttempt = crypto.createHash('sha256').update(password).digest('hex')
+      
+      if (hashedAttempt !== commentToEdit.authorPassword) {
+        return NextResponse.json({ error: '비밀번호가 일치하지 않습니다.' }, { status: 403 })
+      }
+    }
+
+    // Update comment
+    await db.update(comments)
+      .set({ content, createdAt: new Date() }) // Optional: update timestamp or add updatedAt
+      .where(eq(comments.id, parseInt(id)))
+    
+    return NextResponse.json({ success: true }, { status: 200 })
+
+  } catch (error) {
+    console.error('Failed to update comment:', error)
+    return NextResponse.json({ error: '서버 오류 발생' }, { status: 500 })
+  }
+}

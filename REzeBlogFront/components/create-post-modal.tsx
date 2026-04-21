@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation'
 interface CreatePostModalProps {
   initialTitle: string
   initialContent?: string
+  attachments?: {id: string, data: string}[]
   channelId: number | null
   onClose: () => void
 }
 
-export function CreatePostModal({ initialTitle, initialContent = '', channelId, onClose }: CreatePostModalProps) {
+export function CreatePostModal({ initialTitle, initialContent = '', attachments = [], channelId, onClose }: CreatePostModalProps) {
   const router = useRouter()
   const [content, setContent] = useState(initialContent)
   const [nickname, setNickname] = useState('')
@@ -44,6 +45,12 @@ export function CreatePostModal({ initialTitle, initialContent = '', channelId, 
 
     setIsLoading(true)
 
+    // Replace image placeholders with actual base64 data
+    let finalContent = content
+    attachments.forEach(att => {
+      finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+    })
+
     try {
       const res = await fetch('/api/posts', {
         method: 'POST',
@@ -51,7 +58,7 @@ export function CreatePostModal({ initialTitle, initialContent = '', channelId, 
         body: JSON.stringify({
           title: initialTitle,
           slug: 'post-' + Math.random().toString(36).substring(2, 10),
-          content: content,
+          content: finalContent,
           channelId: channelId,
           authorNickname: nickname,
           authorPassword: password, // Only relevant/saved if level 4

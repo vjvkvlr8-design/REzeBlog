@@ -14,11 +14,12 @@ interface ChannelChatInputProps {
 
 export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   const router = useRouter()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // States for text length and UI menus
-  const [textLength, setTextLength] = useState(0)
+  const [content, setContent] = useState('')
+  const [attachments, setAttachments] = useState<{id: string, data: string}[]>([])
   const [showPlusMenu, setShowPlusMenu] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [draftTitle, setDraftTitle] = useState('')
@@ -28,23 +29,18 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    if (!inputRef.current) return
-    
-    const content = inputRef.current.value
     if (!content.trim()) return
 
-    setDraftTitle(content)
-    setDraftContent('')
+    setDraftTitle(content.split('\n')[0])
+    setDraftContent(content)
     setIsModalOpen(true)
   }
 
   // Handle post success cleanup
   const handleModalClose = () => {
     setIsModalOpen(false)
-    if (inputRef.current) {
-      inputRef.current.value = ''
-      setTextLength(0)
-    }
+    setContent('')
+    setAttachments([])
   }
 
   // Close plus menu if clicking outside (simplified logic attached to window)
@@ -77,12 +73,15 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
         ctx?.drawImage(img, 0, 0, width, height)
         
         const base64 = canvas.toDataURL('image/jpeg', 0.6)
-        const insertText = `![업로드된 이미지](${base64})`
+        const imgId = Math.random().toString(36).substr(2, 6)
+        const imgTag = `\n[사진: ${imgId}]\n`
         
-        setDraftTitle(inputRef.current?.value || '사진 업로드')
-        setDraftContent(insertText)
-        setIsModalOpen(true)
+        setAttachments(prev => [...prev, { id: imgId, data: base64 }])
+        setContent(prev => prev + imgTag)
         setShowPlusMenu(false)
+        
+        // Focus the input
+        setTimeout(() => inputRef.current?.focus(), 0)
       }
       img.src = event.target?.result as string
     }
@@ -110,12 +109,9 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
             <span style={{ color: 'var(--dc-text-normal)' }}>사진 업로드</span>
           </div>
           <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
-            if (inputRef.current) {
-              inputRef.current.value += '[텍스트](http://링크)'
-              setTextLength(inputRef.current.value.length)
-              // 메뉴 닫기
-              setShowPlusMenu(false)
-            }
+            setContent(prev => prev + '[텍스트](http://링크)')
+            setShowPlusMenu(false)
+            setTimeout(() => inputRef.current?.focus(), 0)
           }}>
             <span style={{ fontSize: 18 }}>🔗</span>
             <span style={{ color: 'var(--dc-text-normal)' }}>하이퍼링크 삽입</span>
@@ -123,22 +119,32 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
         </div>
       )}
 
-      <form className="chat-input" onSubmit={handleSubmit}>
-        <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+      <form className="chat-input" onSubmit={handleSubmit} style={{ alignItems: 'flex-start' }}>
+        <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', marginTop: '2px' }}>
           <span className="chat-input-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, background: 'var(--dc-interactive-normal)', color: 'var(--dc-bg-primary)', borderRadius: '50%', fontSize: 16, fontWeight: 'bold' }}>＋</span>
         </button>
         
-        <input 
+        <textarea
           ref={inputRef}
-          type="text" 
-          className="chat-input-placeholder" 
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e as any);
+            }
+          }}
           placeholder={`#${currentChannel?.name || '일반'} 에 메시지 보내기`}
-          onChange={(e) => setTextLength(e.target.value.trim().length)}
-          style={{ background: 'transparent', border: 'none', color: 'var(--dc-text-normal)', width: '100%', outline: 'none', paddingLeft: '8px' }}
+          style={{
+            flex: 1, background: 'transparent', border: 'none', color: 'var(--dc-text-normal)',
+            fontSize: 16, lineHeight: 1.375, resize: 'none', outline: 'none', padding: '2px 8px',
+            maxHeight: 120, fontFamily: 'inherit'
+          }}
+          rows={1}
         />
 
-        <button type="submit" disabled={textLength === 0} style={{ background: 'none', border: 'none', cursor: textLength === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={textLength > 0 ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
+        <button type="submit" disabled={content.trim().length === 0} style={{ background: 'none', border: 'none', cursor: content.trim().length === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill={content.trim().length > 0 ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
             <path d="M2.01 21l20.99-9-20.99-9-.01 7 15 2-15 2z"/>
           </svg>
         </button>
@@ -153,6 +159,7 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
         <CreatePostModal 
           initialTitle={draftTitle} 
           initialContent={draftContent}
+          attachments={attachments}
           channelId={currentChannel?.id || null} 
           onClose={handleModalClose} 
         />
