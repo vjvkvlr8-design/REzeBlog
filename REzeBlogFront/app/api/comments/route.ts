@@ -36,11 +36,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { postId, content, author, authorColor, avatarBg, avatarLetter } = body
+    const { postId, content, authorNickname, authorPassword, isAuth } = body
 
     if (!postId || !content) {
       return NextResponse.json(
         { error: 'postId and content are required' },
+        { status: 400 }
+      )
+    }
+
+    if (!isAuth && (!authorNickname || !authorPassword)) {
+      return NextResponse.json(
+        { error: '비회원은 댓글 작성 시 닉네임과 비밀번호를 반드시 입력해야 합니다.' },
         { status: 400 }
       )
     }
@@ -59,16 +66,34 @@ export async function POST(request: Request) {
       )
     }
 
+    // Get IP
+    const headers = request.headers
+    const ip = headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown'
+
+    // Determine Author Identity & Style
+    const author = isAuth ? (authorNickname || '회원') : authorNickname
+    const authorColor = isAuth && authorNickname === '관리자' ? '#ffb347' : isAuth ? '#5865f2' : '#1abc9c'
+    const avatarBg = isAuth && authorNickname === '관리자' ? 'orange' : isAuth ? 'blurple' : 'teal'
+    const avatarLetter = author.charAt(0).toUpperCase()
+
+    // Encrypt password if guest
+    const crypto = await import('crypto')
+    const finalPassword = !isAuth && authorPassword 
+      ? crypto.createHash('sha256').update(authorPassword).digest('hex') 
+      : null
+
     // Create comment
     const newComment = await db
       .insert(comments)
       .values({
         postId: parseInt(postId),
         content,
-        author: author || '방문자',
-        authorColor: authorColor || '#1abc9c',
-        avatarBg: avatarBg || 'teal',
-        avatarLetter: avatarLetter || 'V',
+        author,
+        authorColor,
+        avatarBg,
+        avatarLetter,
+        authorIp: ip.toString().split(',')[0].trim(),
+        authorPassword: finalPassword,
       })
       .returning()
 

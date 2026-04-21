@@ -71,21 +71,35 @@ export async function GET() {
   }
 }
 
-// POST /api/posts - Create a new post (Public access for visitors)
+// POST /api/posts - Create a new post (Public access for visitors & auth users)
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { title, slug, content, channelId } = body
+    const { title, slug, content, channelId, authorNickname, authorPassword, isAuth } = body
 
     if (!title || !slug || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Default visitor author identity
-    const author = '방문자' + Math.floor(Math.random() * 1000)
-    const authorColor = '#1abc9c'
-    const avatarBg = 'teal'
-    const avatarLetter = 'V'
+    if (!isAuth && (!authorNickname || !authorPassword)) {
+      return NextResponse.json({ error: '비회원은 게시글 작성 시 닉네임과 비밀번호를 반드시 입력해야 합니다.' }, { status: 400 })
+    }
+
+    // Get IP
+    const headers = request.headers
+    const ip = headers.get('x-forwarded-for') || headers.get('x-real-ip') || 'unknown'
+
+    // Determine Author Identity & Style
+    const author = isAuth ? (authorNickname || '회원') : authorNickname
+    const authorColor = isAuth && authorNickname === '관리자' ? '#ffb347' : isAuth ? '#5865f2' : '#1abc9c'
+    const avatarBg = isAuth && authorNickname === '관리자' ? 'orange' : isAuth ? 'blurple' : 'teal'
+    const avatarLetter = author.charAt(0).toUpperCase()
+
+    // Encrypt password if guest
+    const crypto = await import('crypto')
+    const finalPassword = !isAuth && authorPassword 
+      ? crypto.createHash('sha256').update(authorPassword).digest('hex') 
+      : null
 
     const newPost = await db.insert(posts).values({
       title,
@@ -96,7 +110,9 @@ export async function POST(request: Request) {
       authorColor,
       avatarBg,
       avatarLetter,
-      published: true, // Auto-publish visitor messages
+      authorIp: ip.toString().split(',')[0].trim(),
+      authorPassword: finalPassword,
+      published: true, // Auto-publish messages
       views: 0
     }).returning()
 

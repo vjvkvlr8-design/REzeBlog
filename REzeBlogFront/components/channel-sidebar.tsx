@@ -147,14 +147,7 @@ export function ChannelSidebar() {
         )))}
       </div>
 
-      {/* User area */}
-      <div className="user-area">
-        <div className="user-avatar">G</div>
-        <div className="user-info">
-          <div className="user-name">게스트</div>
-          <div className="user-status">● 온라인</div>
-        </div>
-      </div>
+      {/* User area migrated to server-sidebar.tsx */}
     </div>
     </>
   )

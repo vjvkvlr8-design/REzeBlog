@@ -3,6 +3,7 @@
 // 작성일: 2026-04-19 (Antigravity)
 
 import { NextResponse } from 'next/server'
+import { createToken } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
@@ -23,12 +24,24 @@ export async function POST(request: Request) {
     const token = Buffer.from(`admin:${Date.now()}:${ADMIN_PASSWORD}`).toString('base64')
     
     const response = NextResponse.json({ success: true })
+    
+    // Legacy Admin Token
     response.cookies.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 4, // 4시간
+      sameSite: 'lax',
       path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    })
+
+    // Universal Auth Token for Level 0 Admin
+    const authJwt = createToken({ nickname: '관리자', level: 0 })
+    response.cookies.set('auth_token', authJwt, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
     })
     
     return response
@@ -41,5 +54,6 @@ export async function DELETE() {
   // 로그아웃
   const response = NextResponse.json({ success: true })
   response.cookies.delete('admin_token')
+  response.cookies.delete('auth_token')
   return response
 }

@@ -11,8 +11,18 @@ import {
 } from 'drizzle-orm/pg-core'
 
 // ============================================
+// ============================================
 // Discord Clone Blog Schema
 // ============================================
+
+// User Auth Table (Level 0 = Admin, Level 3 = Member, Level 4 = Guest)
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  nickname: varchar('nickname', { length: 50 }).notNull().unique(), // ID 겸 고정닉
+  password: varchar('password', { length: 255 }).notNull(), // 해시된 비밀번호
+  level: integer('level').default(3).notNull(), // 권한 레벨
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
 
 // Categories = Discord Channel Categories (▼ 환영, ▼ 개발, etc.)
 export const categories = pgTable('categories', {
@@ -44,6 +54,8 @@ export const posts = pgTable('posts', {
   authorColor: varchar('author_color', { length: 7 }).default('#5865f2').notNull(), // Discord color
   avatarBg: varchar('avatar_bg', { length: 20 }).default('purple').notNull(), // purple, green, orange, etc.
   avatarLetter: varchar('avatar_letter', { length: 1 }).default('R').notNull(),
+  authorIp: varchar('author_ip', { length: 45 }),
+  authorPassword: varchar('author_password', { length: 255 }), // 비회원 삭제용 비밀번호
   channelId: integer('channel_id').references(() => channels.id, { onDelete: 'cascade' }),
   views: integer('views').default(0).notNull(),
   published: boolean('published').default(true).notNull(),
@@ -59,6 +71,8 @@ export const comments = pgTable('comments', {
   authorColor: varchar('author_color', { length: 7 }).default('#1abc9c').notNull(),
   avatarBg: varchar('avatar_bg', { length: 20 }).default('teal').notNull(),
   avatarLetter: varchar('avatar_letter', { length: 1 }).default('V').notNull(),
+  authorIp: varchar('author_ip', { length: 45 }),
+  authorPassword: varchar('author_password', { length: 255 }), // 비회원 삭제용 비밀번호
   postId: integer('post_id').references(() => posts.id, { onDelete: 'cascade' }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })

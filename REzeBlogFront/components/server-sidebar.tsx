@@ -5,6 +5,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { AuthWidget } from './auth-widget'
 
 const servers = [
   { id: 'home', href: '/', icon: '🏠', label: 'REzeBlog 홈' },
@@ -48,14 +49,8 @@ export function ServerSidebar() {
 
       <div className="server-separator" />
 
-      {/* Add server button */}
-      <button
-        className="server-icon"
-        title="서버 추가"
-        style={{ color: '#3ba55d', fontSize: 24 }}
-      >
-        +
-      </button>
+      {/* Auth Widget (User Avatar & Login) */}
+      <AuthWidget />
     </div>
   )
 }

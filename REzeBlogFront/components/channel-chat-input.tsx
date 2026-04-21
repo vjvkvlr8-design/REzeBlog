@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { FormEvent, useRef, useState, useEffect } from 'react'
+import { CreatePostModal } from './create-post-modal'
 
 interface ChannelChatInputProps {
   currentChannel: {
@@ -18,9 +19,11 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   // States for text length and UI menus
   const [textLength, setTextLength] = useState(0)
   const [showPlusMenu, setShowPlusMenu] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [draftTitle, setDraftTitle] = useState('')
 
-  // Submits the post directly via public api
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  // Opens the modal instead of submitting directly to /api/posts
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
     if (!inputRef.current) return
@@ -28,28 +31,16 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
     const content = inputRef.current.value
     if (!content.trim()) return
 
-    try {
-      const res = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: content.slice(0, 30) + (content.length > 30 ? '...' : ''),
-          slug: 'chat-' + Math.random().toString(36).substring(2, 9),
-          content: content,
-          channelId: currentChannel?.id || null
-        })
-      })
+    setDraftTitle(content)
+    setIsModalOpen(true)
+  }
 
-      if (res.ok) {
-        inputRef.current.value = ''
-        setTextLength(0)
-        router.refresh()
-      } else {
-        alert('메시지 전송에 실패했습니다.')
-      }
-    } catch (err) {
-      console.error(err)
-      alert('네트워크 오류가 발생했습니다.')
+  // Handle post success cleanup
+  const handleModalClose = () => {
+    setIsModalOpen(false)
+    if (inputRef.current) {
+      inputRef.current.value = ''
+      setTextLength(0)
     }
   }
 
@@ -109,6 +100,14 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
       <style dangerouslySetInnerHTML={{__html: `
         .hover-bg-modifier:hover { background-color: var(--dc-bg-modifier-hover); }
       `}} />
+
+      {isModalOpen && (
+        <CreatePostModal 
+          initialTitle={draftTitle} 
+          channelId={currentChannel?.id || null} 
+          onClose={handleModalClose} 
+        />
+      )}
     </div>
   )
 }
