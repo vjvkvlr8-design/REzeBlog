@@ -869,43 +869,40 @@ export default function AdminPage() {
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
+                const file = formData.get('iconFile') as File;
                 
-                let iconUrlStr = formData.get('iconUrl') as string;
-                if (!iconUrlStr && (formData.get('iconFile') as File)?.size > 0) {
-                  const file = formData.get('iconFile') as File;
-                  // Limit size to ~500kb
-                  if (file.size > 500000) return alert('파일 크기는 500KB 이하여야 합니다.');
-                  
-                  const buffer = await file.arrayBuffer();
-                  
-                  // Convert ArrayBuffer to Uint8Array first
-                  const uint8Array = new Uint8Array(buffer);
-                  // Convert Uint8Array to string character by character, then btoa
-                  let binary = '';
-                  for (let i = 0; i < uint8Array.byteLength; i++) {
-                    binary += String.fromCharCode(uint8Array[i]);
-                  }
-                  const base64 = typeof window !== 'undefined' ? window.btoa(binary) : '';
-                  const mimeType = file.type;
-                  iconUrlStr = `data:${mimeType};base64,${base64}`;
-                }
+                const processSubmit = async (finalIconUrl: string | null) => {
+                  const data = {
+                    name: formData.get('name') as string,
+                    linkUrl: formData.get('linkUrl') as string,
+                    iconUrl: finalIconUrl,
+                    orderIndex: parseInt(formData.get('orderIndex') as string) || 0,
+                    isDiscordIcon: false
+                  };
 
-                const data = {
-                  name: formData.get('name') as string,
-                  linkUrl: formData.get('linkUrl') as string,
-                  iconUrl: iconUrlStr || null,
-                  orderIndex: parseInt(formData.get('orderIndex') as string) || 0,
-                  isDiscordIcon: false
+                  try {
+                    const res = await fetch('/api/admin/servers', {
+                      method: 'POST', body: JSON.stringify(data)
+                    });
+                    if (res.ok) fetchServers();
+                    else alert('생성 실패');
+                  } catch {
+                    alert('네트워크 오류');
+                  }
                 };
 
-                try {
-                  const res = await fetch('/api/admin/servers', {
-                    method: 'POST', body: JSON.stringify(data)
-                  });
-                  if (res.ok) fetchServers();
-                  else alert('생성 실패');
-                } catch {
-                  alert('네트워크 오류');
+                let iconUrlStr = formData.get('iconUrl') as string;
+                if (!iconUrlStr && file && file.size > 0) {
+                  if (file.size > 500000) return alert('파일 크기는 500KB 이하여야 합니다.');
+                  
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    processSubmit(event.target?.result as string);
+                  };
+                  reader.onerror = () => alert('파일 읽기 오류');
+                  reader.readAsDataURL(file);
+                } else {
+                  processSubmit(iconUrlStr || null);
                 }
               }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <input name="name" placeholder="표시명 (툴팁)" required style={{ padding: 8, flex: 1, minWidth: 150, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4 }} />

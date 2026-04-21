@@ -5,6 +5,8 @@ import { eq, desc, asc } from 'drizzle-orm'
 import { adminRateLimiter } from '@/lib/security'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 function isAuthenticated(): boolean {
   const cookieStore = cookies()
   const token = cookieStore.get('admin_token')

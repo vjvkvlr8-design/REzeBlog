@@ -8,7 +8,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { GameWidget } from './game-widget'
+import { useEffect, useState } from 'react'
 
 interface Channel {
   slug: string
@@ -146,11 +146,6 @@ export function ChannelSidebar() {
             ))}
           </div>
         )))}
-      </div>
-
-      {/* Game Widget at the bottom */}
-      <div style={{ marginTop: 'auto', padding: '16px', display: 'flex', justifyContent: 'center' }}>
-        <GameWidget />
       </div>
     </div>
     </>

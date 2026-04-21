@@ -8,6 +8,8 @@ import { channels, categories, posts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { adminRateLimiter } from '@/lib/security'
 
+export const dynamic = 'force-dynamic'
+
 function isAuthenticated(): boolean {
   const cookieStore = cookies()
   const token = cookieStore.get('admin_token')

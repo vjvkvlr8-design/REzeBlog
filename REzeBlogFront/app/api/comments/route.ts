@@ -4,6 +4,8 @@ import { comments, posts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { verifyToken } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/comments?postId=123 - Fetch comments for a post
 export async function GET(request: Request) {
   try {

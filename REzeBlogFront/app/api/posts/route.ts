@@ -4,6 +4,8 @@ import { posts, comments } from '@/db/schema'
 import { eq, desc, sql, and } from 'drizzle-orm'
 import { verifyToken } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/posts - Fetch all published posts with comment counts
 export async function GET() {
   try {

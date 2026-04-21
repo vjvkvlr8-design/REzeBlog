@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AuthWidget } from './auth-widget'
+import { GameWidget } from './game-widget'
 
 interface ServerIconData {
   id: number
@@ -68,6 +69,13 @@ export function ServerSidebar() {
 
       {/* Auth Widget (User Avatar & Login) */}
       <AuthWidget />
+      
+      <div className="server-separator" />
+      
+      {/* Game Widget embedded as a server icon */}
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
+        <GameWidget />
+      </div>
     </div>
   )
 }

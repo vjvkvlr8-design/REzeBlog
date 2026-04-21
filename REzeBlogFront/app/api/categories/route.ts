@@ -3,6 +3,8 @@ import { db } from '@/lib/drizzle'
 import { categories, channels, posts } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/categories - Fetch all categories with their channels
 export async function GET() {
   try {

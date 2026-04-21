@@ -19,7 +19,7 @@ interface ThreadItem {
 }
 
 export function ThreadPanel() {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const [threads, setThreads] = useState<ThreadItem[]>([])
   const [loading, setLoading] = useState(true)
 
