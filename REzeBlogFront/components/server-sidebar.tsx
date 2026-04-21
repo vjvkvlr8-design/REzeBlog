@@ -18,10 +18,6 @@ interface ServerIconData {
   isDiscordIcon: boolean
 }
 
-const defaultServers = [
-  { id: 'home', linkUrl: '/', iconUrl: null, name: 'REzeBlog 홈', isDiscordIcon: true },
-]
-
 export function ServerSidebar() {
   const pathname = usePathname()
   const [dbServers, setDbServers] = useState<ServerIconData[]>([])
@@ -35,19 +31,7 @@ export function ServerSidebar() {
 
   return (
     <div className="server-sidebar">
-      {/* Home */}
-      <Link
-        href="/"
-        className={`server-icon home-icon ${pathname === '/' ? 'active' : ''}`}
-        title="REzeBlog 홈"
-      >
-        <span className="server-pill" style={{ height: pathname === '/' ? 40 : 0 }} />
-        🏠
-      </Link>
-
-      <div className="server-separator" />
-
-      {/* Category servers */}
+      {/* Category servers from DB */}
       {dbServers.map((s) => (
         <Link
           key={s.id}
@@ -67,15 +51,13 @@ export function ServerSidebar() {
 
       <div className="server-separator" />
 
-      {/* Auth Widget (User Avatar & Login) */}
-      <AuthWidget />
-      
-      <div className="server-separator" />
-      
-      {/* Game Widget embedded as a server icon */}
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 16 }}>
+      {/* Game Widget - 🎮 위에 배치 */}
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 8 }}>
         <GameWidget />
       </div>
+      
+      {/* Auth Widget (User Avatar & Login) - 🎮 아래 배치 */}
+      <AuthWidget />
     </div>
   )
 }
