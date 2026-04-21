@@ -45,10 +45,14 @@ export function CreatePostModal({ initialTitle, initialContent = '', attachments
 
     setIsLoading(true)
 
-    // Replace image placeholders with actual base64 data
+    // Append images at the bottom if they are in attachments but not manually placed in text
     let finalContent = content
     attachments.forEach(att => {
-      finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+      if (!finalContent.includes(`[사진: ${att.id}]`)) {
+        finalContent += `\n\n![업로드된 이미지](${att.data})`
+      } else {
+        finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+      }
     })
 
     try {

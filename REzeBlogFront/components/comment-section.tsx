@@ -130,41 +130,37 @@ export function CommentSection({
   }, [showPlusMenu])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        let { width, height } = img
-        const MAX_DIM = 800
-        if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
-        else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
-        
-        canvas.width = width
-        canvas.height = height
-        const ctx = canvas.getContext('2d')
-        ctx?.drawImage(img, 0, 0, width, height)
-        
-        const base64 = canvas.toDataURL('image/jpeg', 0.6)
-        const imgId = Math.random().toString(36).substr(2, 6)
-        const imgTag = `\n[사진: ${imgId}]\n`
-        
-        setAttachments(prev => [...prev, { id: imgId, data: base64 }])
-        setNewComment((prev) => prev + imgTag)
-        
-        setTimeout(() => {
-          textareaRef.current?.focus()
-          textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
-        }, 0)
-        
-        setShowPlusMenu(false)
+    files.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let { width, height } = img
+          const MAX_DIM = 800
+          if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
+          else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
+          
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          
+          const base64 = canvas.toDataURL('image/jpeg', 0.6)
+          const imgId = Math.random().toString(36).substr(2, 6)
+          
+          setAttachments(prev => [...prev, { id: imgId, data: base64 }])
+        }
+        img.src = event.target?.result as string
       }
-      img.src = event.target?.result as string
-    }
-    reader.readAsDataURL(file)
+      reader.readAsDataURL(file)
+    })
+    
+    setShowPlusMenu(false)
+    setTimeout(() => textareaRef.current?.focus(), 0)
     
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -172,14 +168,18 @@ export function CommentSection({
   // Submit comment
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newComment.trim() || isSubmitting) return
+    if ((!newComment.trim() && attachments.length === 0) || isSubmitting) return
 
     setIsSubmitting(true)
     setError('')
 
     let finalContent = newComment.trim()
     attachments.forEach(att => {
-      finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+      if (!finalContent.includes(`[사진: ${att.id}]`)) {
+        finalContent += `\n\n![업로드된 이미지](${att.data})`
+      } else {
+        finalContent = finalContent.replace(`[사진: ${att.id}]`, `![업로드된 이미지](${att.data})`)
+      }
     })
 
     const avatar = generateRandomAvatar()
@@ -437,11 +437,35 @@ export function CommentSection({
           )}
 
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
+            display: 'flex', flexDirection: 'column',
             background: 'var(--dc-bg-accent)', borderRadius: 8,
             padding: '8px 16px', minHeight: 44, position: 'relative'
           }}>
-            {/* Pop up menu for + button */}
+            {/* Attachment Previews */}
+            {attachments.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '8px', borderBottom: '1px solid var(--dc-bg-tertiary)', width: '100%', marginBottom: '8px' }}>
+                {attachments.map((att) => (
+                  <div key={att.id} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--dc-interactive-muted)' }}>
+                    <img src={att.data} alt="attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(prev => prev.filter(a => a.id !== att.id))}
+                      style={{
+                        position: 'absolute', top: 4, right: 4, width: 20, height: 20,
+                        borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', fontSize: 12
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12 }}>
+              {/* Pop up menu for + button */}
             {showPlusMenu && (
               <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)', marginBottom: '8px' }}>
                 <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
@@ -510,20 +534,19 @@ export function CommentSection({
               {/* Send Button */}
               <button
                 type="submit"
-                disabled={!newComment.trim() || isSubmitting || (userLevel === 4 && (!nickname || !password))}
+                disabled={(!newComment.trim() && attachments.length === 0) || isSubmitting || (userLevel === 4 && (!nickname || !password))}
                 style={{
                   background: 'none', border: 'none',
-                  cursor: (!newComment.trim() || isSubmitting) ? 'not-allowed' : 'pointer',
+                  cursor: ((!newComment.trim() && attachments.length === 0) || isSubmitting) ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', padding: 0
                 }}
                 title="보내기 (Enter)"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={newComment.trim() ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={(newComment.trim() || attachments.length > 0) ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
                   <path d="M2.01 21l20.99-9-20.99-9-.01 7 15 2-15 2z"/>
                 </svg>
               </button>
-            </div>
-          </div>
+            </div>          </div>          </div>
 
           
           {error && (

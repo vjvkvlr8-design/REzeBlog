@@ -29,9 +29,11 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
-    if (!content.trim()) return
+    if (!content.trim() && attachments.length === 0) return
 
-    setDraftTitle(content.split('\n')[0])
+    setDraftTitle(content.split('\n')[0] || '제목 없음')
+    
+    // Attachments will be automatically replaced with markdown images in CreatePostModal
     setDraftContent(content)
     setIsModalOpen(true)
   }
@@ -54,38 +56,37 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   }, [showPlusMenu])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        let { width, height } = img
-        const MAX_DIM = 800
-        if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
-        else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
-        
-        canvas.width = width
-        canvas.height = height
-        const ctx = canvas.getContext('2d')
-        ctx?.drawImage(img, 0, 0, width, height)
-        
-        const base64 = canvas.toDataURL('image/jpeg', 0.6)
-        const imgId = Math.random().toString(36).substr(2, 6)
-        const imgTag = `\n[사진: ${imgId}]\n`
-        
-        setAttachments(prev => [...prev, { id: imgId, data: base64 }])
-        setContent(prev => prev + imgTag)
-        setShowPlusMenu(false)
-        
-        // Focus the input
-        setTimeout(() => inputRef.current?.focus(), 0)
+    files.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let { width, height } = img
+          const MAX_DIM = 800
+          if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
+          else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
+          
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          
+          const base64 = canvas.toDataURL('image/jpeg', 0.6)
+          const imgId = Math.random().toString(36).substr(2, 6)
+          
+          setAttachments(prev => [...prev, { id: imgId, data: base64 }])
+        }
+        img.src = event.target?.result as string
       }
-      img.src = event.target?.result as string
-    }
-    reader.readAsDataURL(file)
+      reader.readAsDataURL(file)
+    })
+    
+    setShowPlusMenu(false)
+    setTimeout(() => inputRef.current?.focus(), 0)
     
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -94,7 +95,8 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
     <div className="chat-input-wrapper" style={{ position: 'relative' }}>
       <input 
         type="file" 
-        accept="image/*" 
+        accept="image/*"
+        multiple 
         ref={fileInputRef} 
         style={{ display: 'none' }} 
         onChange={handleImageUpload} 
@@ -119,35 +121,61 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
         </div>
       )}
 
-      <form className="chat-input" onSubmit={handleSubmit} style={{ alignItems: 'flex-start' }}>
-        <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-          <span className="chat-input-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, background: 'var(--dc-interactive-normal)', color: 'var(--dc-bg-primary)', borderRadius: '50%', fontSize: 16, fontWeight: 'bold' }}>＋</span>
-        </button>
+      <form className="chat-input" onSubmit={handleSubmit} style={{ alignItems: 'flex-start', flexDirection: 'column' }}>
         
-        <textarea
-          ref={inputRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSubmit(e as any);
-            }
-          }}
-          placeholder={`#${currentChannel?.name || '일반'} 에 메시지 보내기`}
-          style={{
-            flex: 1, background: 'transparent', border: 'none', color: 'var(--dc-text-normal)',
-            fontSize: 16, lineHeight: 1.375, resize: 'none', outline: 'none', padding: '2px 8px',
-            maxHeight: 120, fontFamily: 'inherit'
-          }}
-          rows={1}
-        />
+        {/* Attachment Previews */}
+        {attachments.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '0 8px 8px 8px', borderBottom: '1px solid var(--dc-bg-tertiary)', width: '100%', marginBottom: '8px' }}>
+            {attachments.map((att) => (
+              <div key={att.id} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--dc-interactive-muted)' }}>
+                <img src={att.data} alt="attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button
+                  type="button"
+                  onClick={() => setAttachments(prev => prev.filter(a => a.id !== att.id))}
+                  style={{
+                    position: 'absolute', top: 4, right: 4, width: 20, height: 20,
+                    borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff',
+                    border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 12
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <button type="submit" disabled={content.trim().length === 0} style={{ background: 'none', border: 'none', cursor: content.trim().length === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill={content.trim().length > 0 ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
-            <path d="M2.01 21l20.99-9-20.99-9-.01 7 15 2-15 2z"/>
-          </svg>
-        </button>
+        <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+          <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+            <span className="chat-input-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, background: 'var(--dc-interactive-normal)', color: 'var(--dc-bg-primary)', borderRadius: '50%', fontSize: 16, fontWeight: 'bold' }}>＋</span>
+          </button>
+          
+          <textarea
+            ref={inputRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e as any);
+              }
+            }}
+            placeholder={`#${currentChannel?.name || '일반'} 에 메시지 보내기`}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', color: 'var(--dc-text-normal)',
+              fontSize: 16, lineHeight: 1.375, resize: 'none', outline: 'none', padding: '2px 8px',
+              maxHeight: 120, fontFamily: 'inherit'
+            }}
+            rows={1}
+          />
+
+          <button type="submit" disabled={content.trim().length === 0 && attachments.length === 0} style={{ background: 'none', border: 'none', cursor: (content.trim().length === 0 && attachments.length === 0) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', marginTop: '2px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill={(content.trim().length > 0 || attachments.length > 0) ? '#ffffff' : 'var(--dc-text-muted)'} style={{ transition: 'fill 0.2s ease' }}>
+              <path d="M2.01 21l20.99-9-20.99-9-.01 7 15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
       </form>
 
       {/* Global style to handle hover state without adding classes globally */}
