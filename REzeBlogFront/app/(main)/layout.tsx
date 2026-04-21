@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', width: '100%' }}>
+    <div style={{ display: 'flex', height: '100dvh', minHeight: '100vh', overflow: 'hidden', width: '100%' }}>
       {/* Discord 3-column layout + Thread panel */}
       <ServerSidebar />
       <Suspense fallback={<div className="channel-sidebar" />}>
