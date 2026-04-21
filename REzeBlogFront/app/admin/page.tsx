@@ -96,6 +96,12 @@ export default function AdminPage() {
   // 서버 미러링 관리
   const [servers, setServers] = useState<ServerIcon[]>([])
   const [serversLoading, setServersLoading] = useState(false)
+  const [editingServer, setEditingServer] = useState<ServerIcon | null>(null)
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false)
+  const [serverEditName, setServerEditName] = useState('')
+  const [serverEditLink, setServerEditLink] = useState('')
+  const [serverEditOrder, setServerEditOrder] = useState(0)
+  const [serverEditIconUrl, setServerEditIconUrl] = useState('')
 
   // 방문자 인사이트 상태
   const [insightsData, setInsightsData] = useState<VisitorInsightsData | null>(null)
@@ -991,27 +997,13 @@ export default function AdminPage() {
                       <td style={{ padding: '12px 16px', color: 'var(--dc-text-muted)' }}>{srv.linkUrl}</td>
                       <td style={{ textAlign: 'center', padding: '12px 16px' }}>
                         <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-                          <button onClick={async () => {
-                            const newName = prompt('표시명 수정:', srv.name);
-                            if (!newName) return;
-                            const newLink = prompt('링크 수정:', srv.linkUrl);
-                            if (!newLink) return;
-                            const newOrder = prompt('순서 수정:', String(srv.orderIndex));
-                            const newIconUrl = prompt('이미지 URL 수정 (빈칸=유지, clear=삭제):', srv.iconUrl || '');
-                            
-                            const updateData: Record<string, unknown> = { id: srv.id, name: newName, linkUrl: newLink, orderIndex: parseInt(newOrder || '0') };
-                            if (newIconUrl === 'clear') updateData.iconUrl = null;
-                            else if (newIconUrl && newIconUrl !== srv.iconUrl) updateData.iconUrl = newIconUrl;
-                            
-                            try {
-                              const res = await fetch('/api/admin/servers', {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(updateData)
-                              });
-                              if (res.ok) fetchServers();
-                              else alert('수정 실패');
-                            } catch { alert('네트워크 오류'); }
+                          <button onClick={() => {
+                            setEditingServer(srv);
+                            setServerEditName(srv.name);
+                            setServerEditLink(srv.linkUrl);
+                            setServerEditOrder(srv.orderIndex);
+                            setServerEditIconUrl(srv.iconUrl || '');
+                            setIsServerModalOpen(true);
                           }} style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
                             ✏️ 수정
                           </button>
@@ -1696,6 +1688,80 @@ export default function AdminPage() {
             {modalLoading ? '삭제 중...' : '삭제'}
           </button>
         </div>
+      </Modal>
+
+      {/* Server Edit Modal */}
+      <Modal isOpen={isServerModalOpen} onClose={() => { setIsServerModalOpen(false); setEditingServer(null) }} title="🖥️ 서버 아이콘 수정">
+        <form onSubmit={async (e) => {
+          e.preventDefault();
+          if (!editingServer) return;
+          setModalLoading(true);
+          try {
+            const updateData: Record<string, unknown> = {
+              id: editingServer.id,
+              name: serverEditName,
+              linkUrl: serverEditLink,
+              orderIndex: serverEditOrder,
+            };
+            if (serverEditIconUrl !== (editingServer.iconUrl || '')) {
+              updateData.iconUrl = serverEditIconUrl || null;
+            }
+            const res = await fetch('/api/admin/servers', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updateData)
+            });
+            if (res.ok) {
+              fetchServers();
+              setIsServerModalOpen(false);
+              setEditingServer(null);
+            } else {
+              setModalError('수정 실패');
+            }
+          } catch {
+            setModalError('네트워크 오류');
+          } finally {
+            setModalLoading(false);
+          }
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700, display: 'block', marginBottom: 4 }}>표시명</label>
+              <input value={serverEditName} onChange={e => setServerEditName(e.target.value)} required
+                style={{ width: '100%', padding: 8, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4, fontSize: 14 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700, display: 'block', marginBottom: 4 }}>경로 (링크URL)</label>
+              <input value={serverEditLink} onChange={e => setServerEditLink(e.target.value)} required
+                style={{ width: '100%', padding: 8, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4, fontSize: 14 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700, display: 'block', marginBottom: 4 }}>우선순위 (순서)</label>
+              <input type="number" value={serverEditOrder} onChange={e => setServerEditOrder(parseInt(e.target.value) || 0)}
+                style={{ width: '100%', padding: 8, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4, fontSize: 14 }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700, display: 'block', marginBottom: 4 }}>이미지 URL (비우면 기본 아이콘)</label>
+              <input value={serverEditIconUrl} onChange={e => setServerEditIconUrl(e.target.value)} placeholder="https://... 또는 비워두기"
+                style={{ width: '100%', padding: 8, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4, fontSize: 14 }} />
+              {serverEditIconUrl && (
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <img src={serverEditIconUrl} alt="미리보기" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                  <span style={{ fontSize: 12, color: 'var(--dc-text-muted)' }}>미리보기</span>
+                </div>
+              )}
+            </div>
+          </div>
+          {modalError && <div style={{ color: 'var(--dc-text-danger)', fontSize: 13, marginBottom: 8 }}>{modalError}</div>}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={() => { setIsServerModalOpen(false); setEditingServer(null) }}
+              style={{ padding: '10px 16px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: 4, color: 'var(--dc-text-normal)', cursor: 'pointer', fontSize: 14 }}>취소</button>
+            <button type="submit" disabled={modalLoading}
+              style={{ padding: '10px 16px', background: modalLoading ? 'var(--dc-interactive-muted)' : 'var(--dc-brand)', border: 'none', borderRadius: 4, color: '#fff', cursor: modalLoading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 600 }}>
+              {modalLoading ? '저장 중...' : '저장'}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   )
