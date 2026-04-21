@@ -945,15 +945,35 @@ export default function AdminPage() {
                       <td style={{ padding: '12px 16px', fontWeight: 600 }}>{srv.name}</td>
                       <td style={{ padding: '12px 16px', color: 'var(--dc-text-muted)' }}>{srv.linkUrl}</td>
                       <td style={{ textAlign: 'center', padding: '12px 16px' }}>
-                        <button onClick={async () => {
-                          if (confirm('삭제하시겠습니까?')) {
-                            const res = await fetch(`/api/admin/servers?id=${srv.id}`, { method: 'DELETE' });
-                            if (res.ok) fetchServers();
-                            else alert('삭제 실패');
-                          }
-                        }} style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>
-                          🗑️ 삭제
-                        </button>
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                          <button onClick={async () => {
+                            const newName = prompt('표시명 수정:', srv.name);
+                            if (!newName) return;
+                            const newLink = prompt('링크 수정:', srv.linkUrl);
+                            if (!newLink) return;
+                            const newOrder = prompt('순서 수정:', String(srv.orderIndex));
+                            try {
+                              const res = await fetch('/api/admin/servers', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: srv.id, name: newName, linkUrl: newLink, orderIndex: parseInt(newOrder || '0') })
+                              });
+                              if (res.ok) fetchServers();
+                              else alert('수정 실패');
+                            } catch { alert('네트워크 오류'); }
+                          }} style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+                            ✏️ 수정
+                          </button>
+                          <button onClick={async () => {
+                            if (confirm('삭제하시겠습니까?')) {
+                              const res = await fetch(`/api/admin/servers?id=${srv.id}`, { method: 'DELETE' });
+                              if (res.ok) fetchServers();
+                              else alert('삭제 실패');
+                            }
+                          }} style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+                            🗑️ 삭제
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

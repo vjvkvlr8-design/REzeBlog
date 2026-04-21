@@ -51,13 +51,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(allCategories)
   } catch (error) {
     console.error('Failed to fetch categories:', error)
-    // Return fallback data when DB is unavailable
-    const fallbackCategories = [
-      { id: 1, name: '환영', slug: 'welcome', order: 0, createdAt: new Date() },
-      { id: 2, name: '개발', slug: 'dev', order: 1, createdAt: new Date() },
-      { id: 3, name: '커뮤니티', slug: 'community', order: 2, createdAt: new Date() },
-    ]
-    return NextResponse.json(fallbackCategories)
+    return NextResponse.json({ error: 'DB Connection Failed' }, { status: 500 })
   }
 }
 

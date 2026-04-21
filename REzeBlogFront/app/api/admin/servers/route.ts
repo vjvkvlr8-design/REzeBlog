@@ -67,3 +67,29 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to delete server icon' }, { status: 500 })
   }
 }
+
+// PUT /api/admin/servers - Update server icon
+export async function PUT(request: NextRequest) {
+  if (!isAuthenticated()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
+  try {
+    const body = await request.json()
+    const { id, name, iconUrl, linkUrl, orderIndex } = body
+    
+    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
+    
+    const updateData: Record<string, unknown> = {}
+    if (name !== undefined) updateData.name = name
+    if (iconUrl !== undefined) updateData.iconUrl = iconUrl
+    if (linkUrl !== undefined) updateData.linkUrl = linkUrl
+    if (orderIndex !== undefined) updateData.orderIndex = orderIndex
+    
+    const result = await db.update(serverIcons).set(updateData).where(eq(serverIcons.id, parseInt(id))).returning()
+    
+    if (result.length === 0) return NextResponse.json({ error: 'Server icon not found' }, { status: 404 })
+    
+    return NextResponse.json(result[0])
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update server icon' }, { status: 500 })
+  }
+}

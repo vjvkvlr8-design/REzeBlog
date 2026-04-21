@@ -61,17 +61,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(channelsWithCount)
   } catch (error) {
     console.error('Failed to fetch channels:', error)
-    // Return fallback data when DB is unavailable
-    const fallbackChannels = [
-      { id: 1, name: '환영합니다', slug: 'welcome', categoryId: 1, categoryName: '▼ 환영', order: 0, createdAt: new Date() },
-      { id: 2, name: '공지사항', slug: 'announcements', categoryId: 1, categoryName: '▼ 환영', order: 1, createdAt: new Date() },
-      { id: 3, name: 'Next.js 팁', slug: 'nextjs-tips', categoryId: 2, categoryName: '▼ 개발', order: 0, createdAt: new Date() },
-      { id: 4, name: '인터랙티브 스토리', slug: 'interactive-story', categoryId: 2, categoryName: '▼ 개발', order: 1, createdAt: new Date() },
-      { id: 5, name: 'SEO 전략', slug: 'seo-strategy', categoryId: 2, categoryName: '▼ 개발', order: 2, createdAt: new Date() },
-      { id: 6, name: '일반', slug: 'general', categoryId: 3, categoryName: '▼ 커뮤니티', order: 0, createdAt: new Date() },
-      { id: 7, name: '질문과 답변', slug: 'qna', categoryId: 3, categoryName: '▼ 커뮤니티', order: 1, createdAt: new Date() },
-    ]
-    return NextResponse.json(fallbackChannels)
+    return NextResponse.json({ error: 'DB Connection Failed' }, { status: 500 })
   }
 }
 
