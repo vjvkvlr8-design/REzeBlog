@@ -10,6 +10,9 @@ import Link from 'next/link'
 interface ThreadItem {
   slug: string
   title: string
+  content?: string
+  excerpt?: string
+  channelName?: string
   author: string
   authorColor: string
   avatarLetter: string
@@ -134,14 +137,34 @@ export function ThreadPanel() {
             onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--dc-bg-modifier-hover)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
+              {/* Channel name */}
+              <div style={{
+                fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)',
+                marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4
+              }}>
+                <span style={{ fontSize: 14 }}>#</span> {thread.channelName || '일반'}
+              </div>
+
               {/* Thread title */}
               <div style={{
-                fontWeight: 600, fontSize: 14,
+                fontWeight: 600, fontSize: 15,
                 color: 'var(--dc-header-primary)',
-                marginBottom: 4,
+                marginBottom: 6,
+                lineHeight: 1.3,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
                 {thread.title}
+              </div>
+
+              {/* Thread excerpt */}
+              <div style={{
+                fontSize: 13, color: 'var(--dc-text-normal)',
+                marginBottom: 8,
+                lineHeight: 1.4,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {thread.excerpt || (thread.content ? thread.content.replace(/<[^>]*>?/gm, '') : '')}
               </div>
 
               {/* Thread meta */}

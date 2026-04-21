@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/drizzle'
-import { posts, comments } from '@/db/schema'
+import { posts, comments, channels } from '@/db/schema'
 import { eq, desc, sql, and } from 'drizzle-orm'
 import { verifyToken } from '@/lib/auth'
 
@@ -15,6 +15,7 @@ export async function GET() {
         id: posts.id,
         slug: posts.slug,
         title: posts.title,
+        content: posts.content,
         excerpt: posts.excerpt,
         author: posts.author,
         authorColor: posts.authorColor,
@@ -22,8 +23,10 @@ export async function GET() {
         avatarLetter: posts.avatarLetter,
         views: posts.views,
         createdAt: posts.createdAt,
+        channelName: channels.name,
       })
       .from(posts)
+      .leftJoin(channels, eq(posts.channelId, channels.id))
       .where(eq(posts.published, true))
       .orderBy(desc(posts.createdAt))
 
