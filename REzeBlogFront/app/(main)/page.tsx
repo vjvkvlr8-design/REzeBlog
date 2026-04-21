@@ -27,7 +27,7 @@ export default function Home() {
           <div className="welcome-icon">👋</div>
           <h1 className="welcome-title">#환영합니다 에 오신 것을 환영해요!</h1>
           <p className="welcome-desc">
-            이곳은 REzeBlog의 시작점입니다. 왼쪽 채널 목록에서 관심 있는 주제를 선택하여 커뮤니티와 소통해보세요!
+            이곳은 REzeBlog의 시작점입니다. 텍스트 기반 인터랙티브 스토리와 개발 블로그가 결합된 새로운 경험을 만나보세요.
           </p>
         </div>
       </div>

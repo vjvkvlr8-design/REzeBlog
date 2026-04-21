@@ -851,6 +851,51 @@ export default function AdminPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* 카테고리 목록 (빈 카테고리 포함) */}
+            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, overflowX: 'auto', marginTop: 20 }}>
+              <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', margin: 0 }}>📂 카테고리 목록</h3>
+                <span style={{ fontSize: 12, color: 'var(--dc-text-muted)' }}>총 {categories.length}개</span>
+              </div>
+              <table style={{ width: '100%', minWidth: 400, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--dc-bg-tertiary)' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700 }}>카테고리명</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700 }}>슬러그</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700 }}>채널 수</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontSize: 12, color: 'var(--dc-text-muted)', fontWeight: 700 }}>액션</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categories.length === 0 ? (
+                    <tr><td colSpan={4} style={{ padding: 20, textAlign: 'center', color: 'var(--dc-text-muted)' }}>카테고리가 없습니다. 위에서 추가해주세요.</td></tr>
+                  ) : categories.map((cat: Category) => (
+                    <tr key={cat.id} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>▼ {cat.name}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--dc-text-muted)' }}>{cat.slug}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 14, textAlign: 'center' }}>
+                        <span style={{ background: 'var(--dc-interactive-muted)', color: '#fff', padding: '2px 8px', borderRadius: 10, fontSize: 12 }}>
+                          {channels.filter((ch: Channel) => ch.categoryId === cat.id).length}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                          <button onClick={() => { setEditingCategory(cat); setModalError(''); setIsCategoryModalOpen(true) }}
+                            style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+                            ✏️ 수정
+                          </button>
+                          <button onClick={() => { setDeletingItem({ type: 'category', id: cat.id }); setModalError(''); setIsDeleteModalOpen(true) }}
+                            style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}>
+                            🗑️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -952,11 +997,17 @@ export default function AdminPage() {
                             const newLink = prompt('링크 수정:', srv.linkUrl);
                             if (!newLink) return;
                             const newOrder = prompt('순서 수정:', String(srv.orderIndex));
+                            const newIconUrl = prompt('이미지 URL 수정 (빈칸=유지, clear=삭제):', srv.iconUrl || '');
+                            
+                            const updateData: Record<string, unknown> = { id: srv.id, name: newName, linkUrl: newLink, orderIndex: parseInt(newOrder || '0') };
+                            if (newIconUrl === 'clear') updateData.iconUrl = null;
+                            else if (newIconUrl && newIconUrl !== srv.iconUrl) updateData.iconUrl = newIconUrl;
+                            
                             try {
                               const res = await fetch('/api/admin/servers', {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: srv.id, name: newName, linkUrl: newLink, orderIndex: parseInt(newOrder || '0') })
+                                body: JSON.stringify(updateData)
                               });
                               if (res.ok) fetchServers();
                               else alert('수정 실패');
