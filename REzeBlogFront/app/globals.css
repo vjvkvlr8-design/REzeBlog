@@ -58,6 +58,18 @@
     padding: 0;
   }
 
+  html, body {
+    /* 모바일 브라우저 주소창/하단바 대응의 핵심 */
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden; /* body 자체의 스크롤 완전 차단 */
+    position: fixed; /* iOS Safari 스크롤 바운스 완벽 차단 */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
   html {
     scroll-behavior: smooth;
   }
