@@ -400,6 +400,7 @@ export function CommentSection({
         <input 
           type="file" 
           accept="image/*" 
+          multiple
           ref={fileInputRef} 
           style={{ display: 'none' }} 
           onChange={handleImageUpload} 
