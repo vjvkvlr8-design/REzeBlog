@@ -15,12 +15,14 @@ interface ChannelChatInputProps {
 export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // States for text length and UI menus
   const [textLength, setTextLength] = useState(0)
   const [showPlusMenu, setShowPlusMenu] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [draftTitle, setDraftTitle] = useState('')
+  const [draftContent, setDraftContent] = useState('')
 
   // Opens the modal instead of submitting directly to /api/posts
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -32,6 +34,7 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
     if (!content.trim()) return
 
     setDraftTitle(content)
+    setDraftContent('')
     setIsModalOpen(true)
   }
 
@@ -54,19 +57,54 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
     return () => window.removeEventListener('click', handleClick)
   }, [showPlusMenu])
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        const MAX_DIM = 800
+        if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
+        else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
+        
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.6)
+        const insertText = `![업로드된 이미지](${base64})`
+        
+        setDraftTitle(inputRef.current?.value || '사진 업로드')
+        setDraftContent(insertText)
+        setIsModalOpen(true)
+        setShowPlusMenu(false)
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+    
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   return (
     <div className="chat-input-wrapper" style={{ position: 'relative' }}>
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        onChange={handleImageUpload} 
+      />
       {/* Pop up menu for + button */}
       {showPlusMenu && (
         <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)' }}>
           <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
-            if (inputRef.current) {
-              const insertText = '![사진설명](http://사진링크)'
-              inputRef.current.value += insertText
-              setTextLength(inputRef.current.value.length)
-              // 메뉴 닫기
-              setShowPlusMenu(false)
-            }
+            fileInputRef.current?.click()
           }}>
             <span style={{ fontSize: 18 }}>🖼️</span>
             <span style={{ color: 'var(--dc-text-normal)' }}>사진 업로드</span>
@@ -114,6 +152,7 @@ export function ChannelChatInput({ currentChannel }: ChannelChatInputProps) {
       {isModalOpen && (
         <CreatePostModal 
           initialTitle={draftTitle} 
+          initialContent={draftContent}
           channelId={currentChannel?.id || null} 
           onClose={handleModalClose} 
         />

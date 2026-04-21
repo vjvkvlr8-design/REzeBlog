@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 
 interface CreatePostModalProps {
   initialTitle: string
+  initialContent?: string
   channelId: number | null
   onClose: () => void
 }
 
-export function CreatePostModal({ initialTitle, channelId, onClose }: CreatePostModalProps) {
+export function CreatePostModal({ initialTitle, initialContent = '', channelId, onClose }: CreatePostModalProps) {
   const router = useRouter()
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState(initialContent)
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
   const [userLevel, setUserLevel] = useState<number>(4)

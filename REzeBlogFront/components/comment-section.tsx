@@ -59,6 +59,7 @@ export function CommentSection({
   // State for plus menu
   const [showPlusMenu, setShowPlusMenu] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch Auth Status
   useEffect(() => {
@@ -110,6 +111,44 @@ export function CommentSection({
     }
     return () => window.removeEventListener('click', handleClick)
   }, [showPlusMenu])
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        const MAX_DIM = 800
+        if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
+        else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
+        
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.6)
+        const insertText = `![업로드된 이미지](${base64})`
+        
+        setNewComment((prev) => prev + (prev.trim() ? '\n' : '') + insertText + '\n')
+        
+        setTimeout(() => {
+          textareaRef.current?.focus()
+          textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
+        }, 0)
+        
+        setShowPlusMenu(false)
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+    
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   // Submit comment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -242,6 +281,13 @@ export function CommentSection({
 
       {/* Comment Input Form - Discord Chat Input Style */}
       <div style={{ padding: '0 16px 24px', flexShrink: 0 }}>
+        <input 
+          type="file" 
+          accept="image/*" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          onChange={handleImageUpload} 
+        />
         <form onSubmit={handleSubmit}>
           {/* Guest Auth Fields */}
           {userLevel === 4 && (
@@ -283,16 +329,7 @@ export function CommentSection({
             {showPlusMenu && (
               <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)', marginBottom: '8px' }}>
                 <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
-                  if (textareaRef.current) {
-                    const insertText = '![사진설명](http://사진링크)'
-                    setNewComment((prev) => prev + insertText)
-                    setTimeout(() => {
-                      textareaRef.current?.focus()
-                      textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
-                    }, 0)
-                  }
-                  // 메뉴 닫기
-                  setShowPlusMenu(false)
+                  fileInputRef.current?.click()
                 }}>
                   <span style={{ fontSize: 18 }}>🖼️</span>
                   <span style={{ color: 'var(--dc-text-normal)' }}>사진 업로드</span>
