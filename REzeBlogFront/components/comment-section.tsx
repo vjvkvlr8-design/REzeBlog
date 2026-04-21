@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 interface Comment {
   id: number
@@ -56,6 +56,10 @@ export function CommentSection({
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
 
+  // State for plus menu
+  const [showPlusMenu, setShowPlusMenu] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
   // Fetch Auth Status
   useEffect(() => {
     fetch('/api/auth/me')
@@ -97,6 +101,15 @@ export function CommentSection({
     const interval = setInterval(refreshComments, 10000)
     return () => clearInterval(interval)
   }, [refreshComments])
+
+  // Close plus menu if clicking outside
+  useEffect(() => {
+    const handleClick = () => setShowPlusMenu(false)
+    if (showPlusMenu) {
+      setTimeout(() => window.addEventListener('click', handleClick), 0)
+    }
+    return () => window.removeEventListener('click', handleClick)
+  }, [showPlusMenu])
 
   // Submit comment
   const handleSubmit = async (e: React.FormEvent) => {
@@ -266,6 +279,29 @@ export function CommentSection({
             background: 'var(--dc-bg-accent)', borderRadius: 8,
             padding: '8px 16px', minHeight: 44, position: 'relative'
           }}>
+            {/* Pop up menu for + button */}
+            {showPlusMenu && (
+              <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)', marginBottom: '8px' }}>
+                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => alert('사진 업로드 기능은 준비 중입니다.')}>
+                  <span style={{ fontSize: 18 }}>🖼️</span>
+                  <span style={{ color: 'var(--dc-text-normal)' }}>사진 카카오톡처럼 업로드</span>
+                </div>
+                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
+                  if (textareaRef.current) {
+                    const insertText = '[텍스트](http://링크)'
+                    setNewComment((prev) => prev + insertText)
+                    setTimeout(() => {
+                      textareaRef.current?.focus()
+                      textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
+                    }, 0)
+                  }
+                }}>
+                  <span style={{ fontSize: 18 }}>🔗</span>
+                  <span style={{ color: 'var(--dc-text-normal)' }}>하이퍼링크 삽입</span>
+                </div>
+              </div>
+            )}
+
             {/* Left '+' button */}
             <button
               type="button"
@@ -275,14 +311,15 @@ export function CommentSection({
                 border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 16, fontWeight: 'bold', cursor: 'pointer', flexShrink: 0
               }}
-              title="첨부파일 (개발중)"
-              onClick={() => alert('사진 모달 등 확장 기능 예정')}
+              title="확장 메뉴"
+              onClick={() => setShowPlusMenu(!showPlusMenu)}
             >
               ＋
             </button>
 
             {/* Textarea */}
             <textarea
+              ref={textareaRef}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => {
