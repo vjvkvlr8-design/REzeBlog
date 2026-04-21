@@ -269,11 +269,16 @@
                 <h2>최근 작업 기록</h2>
                 <table>
                     <tr>
-                        <th>날짜</th>
-                        <th>작업 내용</th>
-                        <th>작업자</th>
+                        <th style="width: 15%;">날짜</th>
+                        <th style="width: 65%;">작업 내용</th>
+                        <th style="width: 20%;">작업자</th>
                     </tr>
                     <tr style="background: #e8f4e8;">
+                        <td>2026-04-20</td>
+                        <td><strong>[Antigravity 긴급 투입] 프로덕션 보안 방어선 구축:</strong> 1) GitHub 레포지토리 Public → Private 전환 (카피캣 완벽 차단), 2) Vercel WAF(Rate Limiting & AI Bot Protection) 활성화 완료, 3) 게임 내 어드민 URL 노출 경로 원천 차단(클립보드 복사로 대체), 4) 게임 텍스트 속 비밀번호 하드코딩 마스킹 5) 마크다운 에디터 XSS 취약점 조치 권고. 향후 과제: 진짜 DB URL 연결 및 npx drizzle-kit push 진행 요망.</td>
+                        <td>Antigravity (Security)</td>
+                    </tr>
+                    <tr>
                         <td>2026-04-19</td>
                         <td><strong>[Antigravity 투입] Vercel 배포 근본 해결:</strong> 1) middleware.ts setInterval → Edge Runtime 호환 인라인 정리로 변경, 2) next.config.js deprecated 옵션 제거 (swcMinify, images.domains → remotePatterns), 3) vercel.json 중복 빌드 커맨드/rewrite 규칙 제거, 4) Vercel Framework Preset "Other" → "Next.js" 변경, 5) Root Directory REzeBlogFront 확인. <strong>개발 방향성 점검 포함.</strong></td>
                         <td>Antigravity (외부 에이전트)</td>
