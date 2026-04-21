@@ -42,8 +42,8 @@ export function ChannelSidebar() {
           channels: cat.channels.map((ch: any) => ({
             slug: ch.slug,
             name: ch.name,
-            // Calculate unread/badge from posts data if available
-            badge: 0,
+            // Use actual postCount fetched from API instead of 0
+            badge: ch.postCount || 0,
           })),
         }))
         setCategories(transformed)

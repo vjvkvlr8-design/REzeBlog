@@ -24,6 +24,17 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// Server Icons (Leftmost 72px sidebar controlled by Admin Menu)
+export const serverIcons = pgTable('server_icons', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(), // 서버/카테고리명
+  iconUrl: text('icon_url'), // Base64 이미지나 외부 URL
+  linkUrl: varchar('link_url', { length: 500 }).notNull(), // 클릭시 이동 경로
+  orderIndex: integer('order_index').default(0).notNull(),
+  isDiscordIcon: boolean('is_discord_icon').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
 // Categories = Discord Channel Categories (▼ 환영, ▼ 개발, etc.)
 export const categories = pgTable('categories', {
   id: serial('id').primaryKey(),

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/drizzle'
 import { comments, posts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { verifyToken } from '@/lib/auth'
 
 // GET /api/comments?postId=123 - Fetch comments for a post
 export async function GET(request: Request) {
@@ -104,5 +105,65 @@ export async function POST(request: Request) {
       { error: 'Failed to create comment' },
       { status: 500 }
     )
+  }
+}
+
+// DELETE /api/comments - Delete a single comment by ID (Auth or Password verified)
+export async function DELETE(request: Request) {
+  try {
+    const url = new URL(request.url)
+    const id = url.searchParams.get('id')
+    const password = url.searchParams.get('password') // passed if Level 4 (guest)
+
+    if (!id) return NextResponse.json({ error: 'Comment ID required' }, { status: 400 })
+
+    // Check token
+    const cookieStore = require('next/headers').cookies()
+    const token = cookieStore.get('auth_token')?.value
+    const user = token ? await verifyToken(token) : null
+
+    // Find the comment
+    const commentRecord = await db.select().from(comments).where(eq(comments.id, parseInt(id))).limit(1)
+    if (commentRecord.length === 0) {
+      return NextResponse.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    const commentToDel = commentRecord[0]
+
+    // Level 0: Admin (skip checks)
+    if (user?.level === 0) {
+      // Allowed
+    } 
+    // Level 3: Member (check author name matches user nickname)
+    else if (user?.level === 3) {
+      if (commentToDel.author !== user.nickname) {
+        return NextResponse.json({ error: '본인의 댓글만 삭제할 수 있습니다.' }, { status: 403 })
+      }
+    } 
+    // Level 4: Guest (check password)
+    else {
+      if (!password) {
+        return NextResponse.json({ error: '비밀번호를 입력해주세요.' }, { status: 403 })
+      }
+      if (!commentToDel.authorPassword) {
+        return NextResponse.json({ error: '비밀번호가 설정되지 않은 이전 댓글입니다. 관리자에게 문의하세요.' }, { status: 403 })
+      }
+      
+      const crypto = await import('crypto')
+      const hashedAttempt = crypto.createHash('sha256').update(password).digest('hex')
+      
+      if (hashedAttempt !== commentToDel.authorPassword) {
+        return NextResponse.json({ error: '비밀번호가 일치하지 않습니다.' }, { status: 403 })
+      }
+    }
+
+    // Delete comment
+    await db.delete(comments).where(eq(comments.id, parseInt(id)))
+    
+    return NextResponse.json({ success: true }, { status: 200 })
+
+  } catch (error) {
+    console.error('Failed to delete comment:', error)
+    return NextResponse.json({ error: '서버 오류 발생' }, { status: 500 })
   }
 }

@@ -3,23 +3,34 @@
 
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AuthWidget } from './auth-widget'
 
-const servers = [
-  { id: 'home', href: '/', icon: '🏠', label: 'REzeBlog 홈' },
-]
+interface ServerIconData {
+  id: number
+  name: string
+  iconUrl: string | null
+  linkUrl: string
+  orderIndex: number
+  isDiscordIcon: boolean
+}
 
-// 블로그 카테고리를 서버 아이콘으로 표현
-const categoryServers = [
-  { id: 'dev', href: '/blog?cat=개발', icon: '💻', label: '개발' },
-  { id: 'story', href: '/blog?cat=스토리', icon: '📖', label: '스토리' },
-  { id: 'tutorial', href: '/blog?cat=튜토리얼', icon: '📚', label: '튜토리얼' },
+const defaultServers = [
+  { id: 'home', linkUrl: '/', iconUrl: null, name: 'REzeBlog 홈', isDiscordIcon: true },
 ]
 
 export function ServerSidebar() {
   const pathname = usePathname()
+  const [dbServers, setDbServers] = useState<ServerIconData[]>([])
+
+  useEffect(() => {
+    fetch('/api/admin/servers')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setDbServers(data))
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="server-sidebar">
@@ -36,14 +47,20 @@ export function ServerSidebar() {
       <div className="server-separator" />
 
       {/* Category servers */}
-      {categoryServers.map((s) => (
+      {dbServers.map((s) => (
         <Link
           key={s.id}
-          href={s.href}
-          className={`server-icon ${pathname?.startsWith('/blog') ? '' : ''}`}
-          title={s.label}
+          href={s.linkUrl}
+          className={`server-icon ${pathname === s.linkUrl ? 'active' : ''}`}
+          title={s.name}
         >
-          {s.icon}
+          {s.iconUrl ? (
+            <img src={s.iconUrl} alt={s.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--dc-interactive-normal)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 20 }}>
+              {s.name.charAt(0)}
+            </div>
+          )}
         </Link>
       ))}
 

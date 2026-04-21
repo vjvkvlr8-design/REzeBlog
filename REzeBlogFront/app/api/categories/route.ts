@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/drizzle'
-import { categories, channels } from '@/db/schema'
+import { categories, channels, posts } from '@/db/schema'
 import { eq, asc } from 'drizzle-orm'
 
 // GET /api/categories - Fetch all categories with their channels
@@ -12,10 +12,18 @@ export async function GET() {
     // Fetch all channels
     const chans = await db.select().from(channels).orderBy(asc(channels.order))
     
-    // Group channels by category
+    // Fetch all posts to count them per channel
+    const allPosts = await db.select({ channelId: posts.channelId }).from(posts).where(eq(posts.published, true))
+    
+    // Group channels by category and attach post counts
     const result = cats.map((cat) => ({
       ...cat,
-      channels: chans.filter((ch) => ch.categoryId === cat.id),
+      channels: chans
+        .filter((ch) => ch.categoryId === cat.id)
+        .map((ch) => ({
+          ...ch,
+          postCount: allPosts.filter(p => p.channelId === ch.id).length
+        })),
     }))
 
     return NextResponse.json(result)

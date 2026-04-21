@@ -123,7 +123,6 @@ export function ThreadPanel() {
           <Link
             key={thread.slug}
             href={`/blog/${thread.slug}`}
-            target="_blank"
             style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
           >
             <div style={{

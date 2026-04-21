@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { db } from '@/lib/drizzle'
-import { channels, categories } from '@/db/schema'
+import { channels, categories, posts } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { adminRateLimiter } from '@/lib/security'
 
@@ -49,7 +49,14 @@ export async function GET(req: NextRequest) {
       .leftJoin(categories, eq(channels.categoryId, categories.id))
       .orderBy(desc(channels.order))
 
-    return NextResponse.json(allChannels)
+    const allPosts = await db.select({ channelId: posts.channelId }).from(posts)
+
+    const channelsWithCount = allChannels.map(ch => ({
+      ...ch,
+      postCount: allPosts.filter(p => p.channelId === ch.id).length
+    }))
+
+    return NextResponse.json(channelsWithCount)
   } catch (error) {
     console.error('Failed to fetch channels:', error)
     // Return fallback data when DB is unavailable

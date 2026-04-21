@@ -49,6 +49,12 @@ export function CommentSection({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<number | null>(null)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
 
   // Fetch Auth Status
   useEffect(() => {
@@ -132,7 +138,38 @@ export function CommentSection({
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' })
+  }
+
+  const handleDeleteClick = (id: number) => {
+    if (userLevel === 0 || userLevel === 3) {
+      // Direct delete check
+      if (confirm('이 댓글을 삭제하시겠습니까?')) {
+        executeDelete(id, null)
+      }
+    } else {
+      // Guest needs password
+      setCommentToDelete(id)
+      setDeleteModalOpen(true)
+    }
+  }
+
+  const executeDelete = async (id: number, pwd: string | null) => {
+    try {
+      const url = pwd ? `/api/comments?id=${id}&password=${encodeURIComponent(pwd)}` : `/api/comments?id=${id}`
+      const res = await fetch(url, { method: 'DELETE' })
+      if (res.ok) {
+        setComments(prev => prev.filter(c => c.id !== id))
+        setDeleteModalOpen(false)
+        setDeletePassword('')
+      } else {
+        const err = await res.json()
+        setDeleteError(err.error || '삭제 실패')
+        if (pwd) alert(err.error)
+      }
+    } catch {
+      alert('네트워크 오류')
+    }
   }
 
   return (
@@ -160,11 +197,22 @@ export function CommentSection({
               </div>
 
               {/* Comment author header */}
-              <div className="message-header">
-                <span className="message-username" style={{ color: comment.authorColor }}>
-                  {comment.author}
-                </span>
-                <span className="message-timestamp">{formatTime(comment.createdAt)}</span>
+              <div className="message-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span className="message-username" style={{ color: comment.authorColor }}>
+                    {comment.author}
+                  </span>
+                  <span className="message-timestamp">{formatTime(comment.createdAt)}</span>
+                </div>
+                
+                {/* Delete Button */}
+                <button 
+                  onClick={() => handleDeleteClick(comment.id)}
+                  style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', fontSize: '11px', cursor: 'pointer' }}
+                  title="수정/삭제"
+                >
+                  [수정/삭제]
+                </button>
               </div>
 
               {/* Comment content */}
@@ -282,6 +330,40 @@ export function CommentSection({
           )}
         </form>
       </div>
+
+      {/* Delete Password Modal */}
+      {deleteModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.7)', zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'var(--dc-bg-secondary)', padding: '24px', borderRadius: '8px',
+            width: '300px', color: 'var(--dc-text-normal)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#fff' }}>댓글 삭제</h3>
+            <p style={{ fontSize: '12px', color: 'var(--dc-text-muted)', marginBottom: '12px' }}>
+              비회원으로 작성한 댓글입니다. 삭제용 비밀번호를 입력해주세요.
+            </p>
+            <input 
+              type="password" 
+              placeholder="비밀번호" 
+              value={deletePassword}
+              onChange={e => setDeletePassword(e.target.value)}
+              style={{ width: '100%', padding: '8px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: '#fff', marginBottom: '16px' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setDeleteModalOpen(false)}
+                style={{ background: 'none', color: 'var(--dc-text-muted)', border: 'none', cursor: 'pointer' }}>취소</button>
+              <button 
+                onClick={() => executeDelete(commentToDelete!, deletePassword)}
+                style={{ background: '#ed4245', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

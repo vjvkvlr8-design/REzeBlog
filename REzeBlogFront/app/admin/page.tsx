@@ -10,7 +10,7 @@ import { Modal } from '@/components/admin/modal'
 import { MarkdownEditor } from '@/components/admin/markdown-editor'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts'
 
-type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver' | 'write'
+type Tab = 'overview' | 'channels' | 'visitors' | 'seo' | 'naver' | 'write' | 'servers'
 
 // Google Search Console 데이터 타입
 interface SearchConsoleData {
@@ -72,6 +72,16 @@ interface Category {
   order: number
 }
 
+// 서버 아이콘(좌측 72px) 데이터 타입
+interface ServerIcon {
+  id: number
+  name: string
+  iconUrl: string | null
+  linkUrl: string
+  orderIndex: number
+  isDiscordIcon: boolean
+}
+
 export default function AdminPage() {
   const [tab, setTab] = useState<Tab>('overview')
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
@@ -82,6 +92,10 @@ export default function AdminPage() {
   const [error, setError] = useState('')
   const [scError, setScError] = useState('')
   const router = useRouter()
+
+  // 서버 미러링 관리
+  const [servers, setServers] = useState<ServerIcon[]>([])
+  const [serversLoading, setServersLoading] = useState(false)
 
   // 방문자 인사이트 상태
   const [insightsData, setInsightsData] = useState<VisitorInsightsData | null>(null)
@@ -163,14 +177,31 @@ export default function AdminPage() {
     }
   }
 
+  // 서버 아이콘 목록 가져오기
+  const fetchServers = async () => {
+    setServersLoading(true)
+    try {
+      const res = await fetch('/api/admin/servers')
+      if (res.ok) {
+        const data = await res.json()
+        setServers(data)
+      }
+    } catch {
+      console.error('Failed to fetch servers')
+    } finally {
+      setServersLoading(false)
+    }
+  }
+
   useEffect(() => {
     // Fetch analytics, channels and categories
     Promise.all([
       fetch('/api/admin/analytics'),
       fetch('/api/admin/channels'),
-      fetch('/api/admin/categories')
+      fetch('/api/admin/categories'),
+      fetch('/api/admin/servers')
     ])
-      .then(async ([analyticsRes, channelsRes, categoriesRes]) => {
+      .then(async ([analyticsRes, channelsRes, categoriesRes, serversRes]) => {
         if (analyticsRes.status === 401 || channelsRes.status === 401) {
           router.push('/admin/login')
           return null
@@ -178,13 +209,15 @@ export default function AdminPage() {
         const analyticsData = await analyticsRes.json()
         const channelsData = await channelsRes.json()
         const categoriesData = await categoriesRes.json()
-        return { analytics: analyticsData, channels: channelsData, categories: categoriesData }
+        const serversData = serversRes.ok ? await serversRes.json() : []
+        return { analytics: analyticsData, channels: channelsData, categories: categoriesData, servers: serversData }
       })
       .then(data => {
         if (data) {
           setAnalytics(data.analytics)
           setChannels(data.channels)
           setCategories(data.categories)
+          setServers(data.servers)
         }
         setLoading(false)
       })
@@ -452,6 +485,7 @@ export default function AdminPage() {
     { key: 'overview', label: '대시보드', icon: '📊' },
     { key: 'write', label: '글쓰기', icon: '✍️' },
     { key: 'channels', label: '채널/게시글 관리', icon: '#' },
+    { key: 'servers', label: '서버 제어(사이드바)', icon: '🖥️' },
     { key: 'visitors', label: '방문자 추적', icon: '👥' },
     { key: 'seo', label: 'Google SEO', icon: '🔍' },
     { key: 'naver', label: '방문자 인사이트 (Supabase)', icon: '📈' },
@@ -798,7 +832,7 @@ export default function AdminPage() {
                             onClick={() => router.push(`/blog?ch=${ch.slug}`)}
                             style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
                           >
-                            📝 게시글
+                            📝 게시글/댓글 관리 (프론트)
                           </button>
                           <button 
                             onClick={() => {
@@ -811,6 +845,118 @@ export default function AdminPage() {
                             🗑️
                           </button>
                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* SERVERS TAB */}
+        {tab === 'servers' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--dc-header-primary)' }}>🖥️ 왼쪽 서버 아이콘 미러링 컨트롤</h2>
+              <p style={{ fontSize: 13, color: 'var(--dc-text-muted)', margin: 0 }}>
+                디스코드 72px 고정 사이드바의 아이콘을 DB 기반으로 실시간 제어합니다.
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, padding: 20, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--dc-header-primary)', marginBottom: 16 }}>+ 새 아이콘 등록</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                
+                let iconUrlStr = formData.get('iconUrl') as string;
+                if (!iconUrlStr && (formData.get('iconFile') as File)?.size > 0) {
+                  const file = formData.get('iconFile') as File;
+                  // Limit size to ~500kb
+                  if (file.size > 500000) return alert('파일 크기는 500KB 이하여야 합니다.');
+                  
+                  const buffer = await file.arrayBuffer();
+                  
+                  // Convert ArrayBuffer to Uint8Array first
+                  const uint8Array = new Uint8Array(buffer);
+                  // Convert Uint8Array to string character by character, then btoa
+                  let binary = '';
+                  for (let i = 0; i < uint8Array.byteLength; i++) {
+                    binary += String.fromCharCode(uint8Array[i]);
+                  }
+                  const base64 = typeof window !== 'undefined' ? window.btoa(binary) : '';
+                  const mimeType = file.type;
+                  iconUrlStr = `data:${mimeType};base64,${base64}`;
+                }
+
+                const data = {
+                  name: formData.get('name') as string,
+                  linkUrl: formData.get('linkUrl') as string,
+                  iconUrl: iconUrlStr || null,
+                  orderIndex: parseInt(formData.get('orderIndex') as string) || 0,
+                  isDiscordIcon: false
+                };
+
+                try {
+                  const res = await fetch('/api/admin/servers', {
+                    method: 'POST', body: JSON.stringify(data)
+                  });
+                  if (res.ok) fetchServers();
+                  else alert('생성 실패');
+                } catch {
+                  alert('네트워크 오류');
+                }
+              }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input name="name" placeholder="표시명 (툴팁)" required style={{ padding: 8, flex: 1, minWidth: 150, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4 }} />
+                <input name="linkUrl" placeholder="경로 (/blog?ch=slug)" required style={{ padding: 8, flex: 2, minWidth: 200, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4 }} />
+                <input name="orderIndex" type="number" placeholder="순서" defaultValue={0} style={{ padding: 8, width: 80, background: 'var(--dc-bg-tertiary)', border: 'none', color: '#fff', borderRadius: 4 }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--dc-bg-tertiary)', padding: '0 8px', borderRadius: 4 }}>
+                  <span style={{ fontSize: 13, color: 'var(--dc-text-muted)' }}>이미지 파일:</span>
+                  <input name="iconFile" type="file" accept="image/*" style={{ fontSize: 12, color: '#fff', width: 140 }} />
+                </div>
+                
+                <button type="submit" style={{ background: 'var(--dc-brand)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>추가</button>
+              </form>
+            </div>
+
+            <div style={{ background: 'var(--dc-bg-secondary)', borderRadius: 8, overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: 600, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--dc-bg-tertiary)' }}>
+                    <th style={{ textAlign: 'center', padding: '12px 16px' }}>순서</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px' }}>아이콘</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px' }}>표시 이름</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px' }}>링크</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px' }}>동작</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servers.map(srv => (
+                    <tr key={srv.id} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
+                      <td style={{ textAlign: 'center', padding: '12px 16px', color: 'var(--dc-text-muted)' }}>{srv.orderIndex}</td>
+                      <td style={{ textAlign: 'center', padding: '12px 16px' }}>
+                        {srv.iconUrl ? (
+                          <img src={srv.iconUrl} alt={srv.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--dc-brand)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                            {srv.name.charAt(0)}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600 }}>{srv.name}</td>
+                      <td style={{ padding: '12px 16px', color: 'var(--dc-text-muted)' }}>{srv.linkUrl}</td>
+                      <td style={{ textAlign: 'center', padding: '12px 16px' }}>
+                        <button onClick={async () => {
+                          if (confirm('삭제하시겠습니까?')) {
+                            const res = await fetch(`/api/admin/servers?id=${srv.id}`, { method: 'DELETE' });
+                            if (res.ok) fetchServers();
+                            else alert('삭제 실패');
+                          }
+                        }} style={{ background: 'rgba(237,66,69,0.2)', color: 'var(--dc-text-danger)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>
+                          🗑️ 삭제
+                        </button>
                       </td>
                     </tr>
                   ))}

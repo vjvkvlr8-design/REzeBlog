@@ -12,6 +12,7 @@ import { posts, comments, reactions, channels, categories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { MarkdownRenderer } from '@/components/markdown-renderer'
 import { CommentSection } from '@/components/comment-section'
+import { PostDeleteButton } from '@/components/post-delete-button'
 
 // Fetch post from database
 async function getPost(slug: string) {
@@ -44,7 +45,7 @@ async function getPost(slug: string) {
       ...post,
       id: post.id,
       date: post.createdAt.toISOString().split('T')[0],
-      time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }),
       content: post.content,
       channel: channelName,
       category: categoryName,
@@ -56,7 +57,7 @@ async function getPost(slug: string) {
         avatarBg: c.avatarBg,
         avatarLetter: c.avatarLetter,
         content: c.content,
-        time: c.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+        time: c.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }),
       })),
     }
   } catch (error) {
@@ -168,9 +169,12 @@ export default async function PostPage({ params }: Props) {
         {/* Original post */}
         <div className="message message-first">
           <div className={`message-avatar ${post.avatarBg}`}>{post.avatarLetter}</div>
-          <div className="message-header">
-            <span className="message-username" style={{ color: post.authorColor }}>{post.author}</span>
-            <span className="message-timestamp">{post.date} {post.time}</span>
+          <div className="message-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span className="message-username" style={{ color: post.authorColor }}>{post.author}</span>
+              <span className="message-timestamp">{post.date} {post.time}</span>
+            </div>
+            <PostDeleteButton postId={post.id} postAuthor={post.author} />
           </div>
           <div className="message-content">
             <div style={{ fontWeight: 700, fontSize: 18, color: 'var(--dc-header-primary)', marginBottom: 12 }}>

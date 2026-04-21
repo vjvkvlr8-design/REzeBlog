@@ -87,7 +87,7 @@ async function getPosts(channelSlug?: string, categoryName?: string) {
       avatarBg: post.avatarBg,
       avatarLetter: post.avatarLetter,
       date: post.createdAt.toISOString().split('T')[0],
-      time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }),
       reactions: allReactions.filter((r) => r.postId === post.id).map((r) => ({ emoji: r.emoji, count: r.count })),
       replies: allComments
         .filter((c) => c.postId === post.id)
@@ -97,7 +97,7 @@ async function getPosts(channelSlug?: string, categoryName?: string) {
           avatarBg: c.avatarBg,
           avatarLetter: c.avatarLetter,
           content: c.content,
-          time: c.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          time: c.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }),
         })),
     }))
   } catch (error) {
@@ -202,7 +202,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                     <span className="message-timestamp">{post.time}</span>
                   </div>
                   <div className="message-content">
-                    <Link href={`/blog/${post.slug}`} target="_blank" className="message-post-title">
+                    <Link href={`/blog/${post.slug}`} className="message-post-title">
                       {post.title}
                     </Link>
                     <div className="message-post-excerpt">
