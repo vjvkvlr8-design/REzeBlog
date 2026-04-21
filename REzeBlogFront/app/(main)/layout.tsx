@@ -1,7 +1,6 @@
 import { ServerSidebar } from '@/components/server-sidebar'
 import { ChannelSidebar } from '@/components/channel-sidebar'
 import { ThreadPanel } from '@/components/thread-panel'
-import { GameWidget } from '@/components/game-widget'
 import { Suspense } from 'react'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -18,8 +17,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Suspense fallback={null}>
         <ThreadPanel />
       </Suspense>
-      {/* Floating game widget */}
-      <GameWidget />
     </div>
   )
 }

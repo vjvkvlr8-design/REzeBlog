@@ -79,21 +79,29 @@ export function AuthWidget() {
         {avatarLetter}
       </button>
 
-      {/* Auth Status & Login Modal Combo */}
       {isModalOpen && (
         <div style={{
-          position: 'absolute',
-          bottom: '10px',
-          left: '80px',
-          width: '300px',
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '320px',
           background: 'var(--dc-bg-secondary)',
           borderRadius: '8px',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-          padding: '16px',
-          zIndex: 9999,
-          color: 'var(--dc-text-normal)'
+          boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+          padding: '24px',
+          zIndex: 99999,
+          color: 'var(--dc-text-normal)',
+          animation: 'modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', borderBottom: '1px solid var(--dc-bg-tertiary)', paddingBottom: '16px' }}>
+          {/* Close button */}
+          <button 
+            onClick={() => setIsModalOpen(false)}
+            style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: 'var(--dc-text-muted)', cursor: 'pointer', fontSize: '18px' }}>
+            &times;
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', borderBottom: '1px solid var(--dc-bg-tertiary)', paddingBottom: '20px' }}>
             <div style={{ width: 40, height: 40, borderRadius: '50%', background: avatarColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>
               {avatarLetter}
             </div>
@@ -113,9 +121,9 @@ export function AuthWidget() {
             </button>
           ) : (
             <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                <button type="button" onClick={() => setIsLoginView(true)} style={{ flex: 1, background: isLoginView ? 'var(--dc-interactive-active)' : 'var(--dc-interactive-muted)', color: '#fff', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>로그인</button>
-                <button type="button" onClick={() => setIsLoginView(false)} style={{ flex: 1, background: !isLoginView ? 'var(--dc-interactive-active)' : 'var(--dc-interactive-muted)', color: '#fff', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}>회원가입</button>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <button type="button" onClick={() => setIsLoginView(true)} style={{ flex: 1, background: isLoginView ? 'var(--dc-interactive-active)' : 'var(--dc-interactive-muted)', color: isLoginView ? '#000' : '#fff', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>로그인</button>
+                <button type="button" onClick={() => setIsLoginView(false)} style={{ flex: 1, background: !isLoginView ? 'var(--dc-interactive-active)' : 'var(--dc-interactive-muted)', color: !isLoginView ? '#000' : '#fff', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>회원가입</button>
               </div>
               
               <input 
@@ -142,6 +150,13 @@ export function AuthWidget() {
           )}
         </div>
       )}
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes modalPop {
+          0% { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
+          100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+      `}} />
     </div>
   )
 }

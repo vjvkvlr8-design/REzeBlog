@@ -648,10 +648,6 @@
     overflow-y: auto;
   }
   .game-widget-toggle {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    z-index: 999;
     width: 48px;
     height: 48px;
     border-radius: 50%;
