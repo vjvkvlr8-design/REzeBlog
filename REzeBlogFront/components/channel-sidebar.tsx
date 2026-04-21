@@ -21,32 +21,6 @@ interface Category {
   channels: Channel[]
 }
 
-// Fallback data when API fails
-const FALLBACK_CATEGORIES: Category[] = [
-  {
-    name: '환영',
-    channels: [
-      { slug: 'welcome', name: '환영합니다' },
-      { slug: 'announcements', name: '공지사항' },
-    ]
-  },
-  {
-    name: '개발',
-    channels: [
-      { slug: 'nextjs-tips', name: 'Next.js 팁' },
-      { slug: 'interactive-story', name: '인터랙티브 스토리' },
-      { slug: 'seo-strategy', name: 'SEO 전략' },
-    ]
-  },
-  {
-    name: '커뮤니티',
-    channels: [
-      { slug: 'general', name: '일반' },
-      { slug: 'qna', name: '질문과 답변' },
-    ]
-  }
-]
-
 export function ChannelSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -74,8 +48,7 @@ export function ChannelSidebar() {
         setCategories(transformed)
       } catch (err) {
         console.error('Failed to fetch categories:', err)
-        // Use fallback data when API fails
-        setCategories(FALLBACK_CATEGORIES)
+        setCategories([])
       } finally {
         setLoading(false)
       }
