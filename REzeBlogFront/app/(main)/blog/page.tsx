@@ -9,6 +9,8 @@ import { posts, comments, reactions, channels } from '@/db/schema'
 import { asc, eq, and, inArray } from 'drizzle-orm'
 import { ChannelChatInput } from '@/components/channel-chat-input'
 
+import { redirect } from 'next/navigation'
+
 export const metadata: Metadata = {
   title: '블로그 - 인터랙티브 스토리텔링과 개발 이야기 | REzeBlog',
   description: '텍스트 기반 인터랙티브 스토리, Next.js 14 개발 팁, 1인 개발자를 위한 실전 가이드.',
@@ -143,6 +145,16 @@ interface PageProps {
 export default async function BlogPage({ searchParams }: PageProps) {
   // Get channel from query param (?ch=channel-slug)
   const channelSlug = typeof searchParams.ch === 'string' ? searchParams.ch : undefined
+  
+  if (!channelSlug) {
+    const firstChannel = await db.query.channels.findFirst({
+      orderBy: asc(channels.order)
+    })
+    if (firstChannel) {
+      redirect(`/blog?ch=${firstChannel.slug}`)
+    }
+  }
+
   // Get category from query param (?cat=category-name) - used by ServerSidebar
   const categoryName = typeof searchParams.cat === 'string' ? searchParams.cat : undefined
   
@@ -252,7 +264,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                       <span className="message-username" style={{ color: reply.authorColor }}>{reply.author}</span>
                       <span className="message-timestamp">{reply.time}</span>
                     </div>
-                    <div className="message-content">{reply.content}</div>
+                    <div className="message-content">{reply.content.replace(/!\[.*?\]\(data:image\/[^;]+;base64,[^\)]+\)/g, '[사진]')}</div>
                   </div>
                 ))}
               </div>

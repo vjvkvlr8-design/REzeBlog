@@ -30,10 +30,12 @@ async function getPost(slug: string) {
     // Fetch channel and category names for SEO
     let channelName = ''
     let categoryName = ''
+    let channelSlug = ''
     if (post.channelId) {
       const channel = await db.select().from(channels).where(eq(channels.id, post.channelId)).limit(1)
       if (channel[0]) {
         channelName = channel[0].name
+        channelSlug = channel[0].slug
         if (channel[0].categoryId) {
           const category = await db.select().from(categories).where(eq(categories.id, channel[0].categoryId)).limit(1)
           if (category[0]) categoryName = category[0].name
@@ -48,6 +50,7 @@ async function getPost(slug: string) {
       time: post.createdAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' }),
       content: post.content,
       channel: channelName,
+      channelSlug,
       category: categoryName,
       reactions: postReactions.map((r) => ({ emoji: r.emoji, count: r.count })),
       replies: postComments.map((c) => ({
@@ -159,8 +162,8 @@ export default async function PostPage({ params }: Props) {
         <span className="chat-header-name">스레드</span>
         <div className="chat-header-divider" />
         <span className="chat-header-topic" style={{ flex: 1 }}>{post.title}</span>
-        <Link href="/blog" style={{ color: 'var(--dc-interactive-normal)', fontSize: 14, textDecoration: 'none' }}>
-          ← #일반 로 돌아가기
+        <Link href={`/blog?ch=${post.channelSlug || 'welcome'}`} style={{ color: 'var(--dc-interactive-normal)', fontSize: 14, textDecoration: 'none' }}>
+          ← #{post.channel || '일반'} 로 돌아가기
         </Link>
       </div>
 

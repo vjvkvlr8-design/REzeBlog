@@ -24,7 +24,7 @@ interface Category {
 export function ChannelSidebar() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const currentChannel = searchParams?.get('ch') || (pathname === '/' ? 'welcome' : '')
+  const currentChannel = searchParams?.get('ch') || ''
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
