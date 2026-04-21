@@ -11,10 +11,8 @@ export const metadata = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
-      <body>
-        {children}
-      </body>
-    </html>
+    <div style={{ width: '100%', height: '100%', overflowY: 'auto' }}>
+      {children}
+    </div>
   )
 }

@@ -96,6 +96,33 @@ export async function GET() {
     const totalViews = postsData.reduce((sum, p) => sum + (p.views || 0), 0)
     const avgSessionDuration = totalVisitors > 0 ? Math.floor(totalViews / totalVisitors) : 0
 
+    // Dynamic Referrers Calculation
+    const referrerMap: Record<string, number> = {}
+    let directCount = 0
+    let googleCount = 0
+    let naverCount = 0
+    let xCount = 0
+    let otherCount = 0
+
+    recentVisitorsData.forEach(v => {
+      const ref = v.referrer?.toLowerCase() || ''
+      if (!ref) directCount++
+      else if (ref.includes('google')) googleCount++
+      else if (ref.includes('naver')) naverCount++
+      else if (ref.includes('twitter') || ref.includes('t.co')) xCount++
+      else otherCount++
+    })
+
+    const calcPerc = (cnt: number) => totalVisitors > 0 ? Number(((cnt / totalVisitors) * 100).toFixed(1)) : 0
+
+    const referrers = [
+      { source: 'Google 검색', visitors: googleCount, percentage: calcPerc(googleCount) },
+      { source: 'Naver 검색', visitors: naverCount, percentage: calcPerc(naverCount) },
+      { source: '직접 방문', visitors: directCount, percentage: calcPerc(directCount) },
+      { source: 'Twitter/X', visitors: xCount, percentage: calcPerc(xCount) },
+      { source: '기타', visitors: otherCount, percentage: calcPerc(otherCount) },
+    ]
+
     const analyticsData = {
       overview: {
         totalVisitors,
@@ -105,13 +132,7 @@ export async function GET() {
         bounceRate: '45.2%', // placeholder - would need actual calculation
       },
       topPages,
-      referrers: [
-        { source: 'Google 검색', visitors: Math.floor(totalVisitors * 0.42), percentage: 41.9 },
-        { source: 'Naver 검색', visitors: Math.floor(totalVisitors * 0.25), percentage: 25.0 },
-        { source: '직접 방문', visitors: Math.floor(totalVisitors * 0.16), percentage: 15.9 },
-        { source: 'Twitter/X', visitors: Math.floor(totalVisitors * 0.07), percentage: 7.0 },
-        { source: '기타', visitors: Math.floor(totalVisitors * 0.1), percentage: 10.2 },
-      ],
+      referrers: referrers,
       topKeywords: [
         { keyword: '인터랙티브 스토리텔링', clicks: 145, impressions: 2340, position: 3.2 },
         { keyword: 'Next.js 블로그 만들기', clicks: 98, impressions: 1890, position: 5.7 },

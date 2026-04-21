@@ -1,12 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Noto_Sans_KR } from 'next/font/google'
 import './globals.css'
-import { ServerSidebar } from '@/components/server-sidebar'
-import { ChannelSidebar } from '@/components/channel-sidebar'
-import { ThreadPanel } from '@/components/thread-panel'
-import { GameWidget } from '@/components/game-widget'
 import { VisitorTracker } from '@/components/visitor-tracker'
-import { Suspense } from 'react'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -62,21 +57,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${inter.variable} ${notoSansKR.variable}`}>
       <body>
-        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-          {/* Discord 3-column layout + Thread panel */}
-          <ServerSidebar />
-          <Suspense fallback={<div className="channel-sidebar" />}>
-            <ChannelSidebar />
-          </Suspense>
-          <div className="chat-area" style={{ position: 'relative' }}>
-            {children}
-          </div>
-          <Suspense fallback={null}>
-            <ThreadPanel />
-          </Suspense>
-        </div>
-        {/* Floating game widget */}
-        <GameWidget />
+        {children}
         {/* Visitor tracking */}
         <VisitorTracker />
       </body>

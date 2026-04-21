@@ -6,7 +6,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { db } from '@/lib/drizzle'
 import { posts, comments, reactions, channels } from '@/db/schema'
-import { asc, eq, and } from 'drizzle-orm'
+import { asc, eq, and, inArray } from 'drizzle-orm'
+import { ChannelChatInput } from '@/components/channel-chat-input'
 
 export const metadata: Metadata = {
   title: '블로그 - 인터랙티브 스토리텔링과 개발 이야기 | REzeBlog',
@@ -128,7 +129,10 @@ async function getPosts(channelSlug?: string, categoryName?: string) {
           allPosts = await db
             .select()
             .from(posts)
-            .where(and(eq(posts.published, true), ...channelIds.map(id => eq(posts.channelId, id))))
+            .where(and(
+              eq(posts.published, true),
+              inArray(posts.channelId, channelIds)
+            ))
             .orderBy(asc(posts.createdAt))
         } else {
           allPosts = await db.select().from(posts).where(eq(posts.published, true)).orderBy(asc(posts.createdAt))
@@ -331,45 +335,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
       </div>
 
       {/* Chat Input */}
-      <div className="chat-input-wrapper">
-        <form className="chat-input" action="/api/admin/posts" method="POST" onSubmit={(e) => {
-          e.preventDefault();
-          const input = e.currentTarget.elements.namedItem('content') as HTMLInputElement;
-          const content = input.value;
-          if (!content.trim()) return;
-          
-          fetch('/api/admin/posts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: content.slice(0, 30) + (content.length > 30 ? '...' : ''),
-              slug: 'chat-' + Math.random().toString(36).substring(2, 9),
-              content: content,
-              channelId: currentChannel?.id || null,
-              published: true
-            })
-          }).then(res => {
-            if(res.ok) {
-              input.value = '';
-              window.location.reload();
-            } else {
-              alert('메시지 전송에 실패했습니다. (관리자 권한이 필요할 수 있습니다.)');
-            }
-          });
-        }}>
-          <span className="chat-input-icon">＋</span>
-          <input 
-            name="content"
-            type="text" 
-            className="chat-input-placeholder" 
-            placeholder={`#${currentChannel?.name || '일반'} 에 메시지 보내기`}
-            style={{ background: 'transparent', border: 'none', color: 'var(--dc-text-normal)', width: '100%', outline: 'none' }}
-          />
-          <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <span className="chat-input-icon">😀</span>
-          </button>
-        </form>
-      </div>
+      <ChannelChatInput currentChannel={currentChannel} />
     </>
   )
 }
