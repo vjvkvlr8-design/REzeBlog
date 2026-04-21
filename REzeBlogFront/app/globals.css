@@ -59,15 +59,12 @@
   }
 
   html, body {
-    /* 모바일 브라우저 주소창/하단바 대응의 핵심 */
-    height: 100dvh;
+    /* 모바일 브라우저 주소창/하단바 짤림 현상의 근본적 해결 */
+    height: 100%;
     width: 100%;
     overflow: hidden; /* body 자체의 스크롤 완전 차단 */
-    position: fixed; /* iOS Safari 스크롤 바운스 완벽 차단 */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: fixed; /* iOS/Android 스크롤 바운스 완벽 차단 */
+    inset: 0; /* top, left, right, bottom: 0 과 동일 (브라우저 크롬 영역 제외한 순수 뷰포트에 꽉 참) */
   }
 
   html {
