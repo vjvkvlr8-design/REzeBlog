@@ -258,6 +258,8 @@ function renderInlineMarkdown(text: string): JSX.Element {
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g
   // 링크 패턴: [text](url)
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+  // 일반 URL 패턴: http:// or https:// (단, 괄호나 따옴표 안에 갇혀있지 않은 독립된 URL)
+  const rawUrlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g
   // 볼드 패턴: **text**
   const boldRegex = /\*\*([^*]+)\*\*/g
   // 이탤릭 패턴: *text* 또는 _text_
@@ -266,7 +268,7 @@ function renderInlineMarkdown(text: string): JSX.Element {
   const codeRegex = /`([^`]+)`/g
 
   // 모든 패턴을 하나의 regex로 결합
-  const combinedRegex = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|`[^`]+`)/g
+  const combinedRegex = /(!\[[^\]]*\]\([^)]+\)|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s<]+[^<.,:;"')\]\s]|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|`[^`]+`)/g
 
   let lastIndex = 0
   let match
@@ -299,7 +301,7 @@ function renderInlineMarkdown(text: string): JSX.Element {
         )
       }
     }
-    // 링크 처리
+    // 명시적 링크 처리
     else if (matchText.startsWith('[')) {
       const linkMatch = matchText.match(/\[([^\]]+)\]\(([^)]+)\)/)
       if (linkMatch) {
@@ -325,6 +327,30 @@ function renderInlineMarkdown(text: string): JSX.Element {
           </a>
         )
       }
+    }
+    // 일반 URL 자동 하이퍼링크 처리
+    else if (matchText.startsWith('http')) {
+      parts.push(
+        <a
+          key={key++}
+          href={matchText}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#00aff4',
+            textDecoration: 'none',
+            fontWeight: 500,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.textDecoration = 'underline'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.textDecoration = 'none'
+          }}
+        >
+          {matchText}
+        </a>
+      )
     }
     // 볼드 처리
     else if (matchText.startsWith('**')) {

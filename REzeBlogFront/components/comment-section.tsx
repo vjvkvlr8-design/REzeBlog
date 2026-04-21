@@ -472,29 +472,16 @@ export function CommentSection({
             )}
 
             <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: 12 }}>
-              {/* Pop up menu for + button */}
+            {/* Pop up menu for + button */}
             {showPlusMenu && (
               <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)', marginBottom: '8px' }}>
-                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
+                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '12px' }} className="hover-bg-modifier" onClick={() => {
                   fileInputRef.current?.click()
                 }}>
-                  <span style={{ fontSize: 18 }}>🖼️</span>
-                  <span style={{ color: 'var(--dc-text-normal)' }}>사진 업로드</span>
-                </div>
-                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
-                  if (textareaRef.current) {
-                    const insertText = '[텍스트](http://링크)'
-                    setNewComment((prev) => prev + insertText)
-                    setTimeout(() => {
-                      textareaRef.current?.focus()
-                      textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
-                    }, 0)
-                  }
-                  // 메뉴 닫기
-                  setShowPlusMenu(false)
-                }}>
-                  <span style={{ fontSize: 18 }}>🔗</span>
-                  <span style={{ color: 'var(--dc-text-normal)' }}>하이퍼링크 삽입</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--dc-text-normal)" style={{ flexShrink: 0 }}>
+                    <path d="M13 2H6C4.89 2 4 2.9 4 4V20C4 21.1 4.89 22 6 22H18C19.1 22 20 21.1 20 20V9L13 2ZM12 19V15H9L12 11L15 15H12V19ZM13 9V3.5L18.5 9H13Z" />
+                  </svg>
+                  <span style={{ color: 'var(--dc-text-normal)', fontWeight: 500 }}>사진 업로드</span>
                 </div>
               </div>
             )}
