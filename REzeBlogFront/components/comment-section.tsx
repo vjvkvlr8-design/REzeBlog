@@ -282,9 +282,20 @@ export function CommentSection({
             {/* Pop up menu for + button */}
             {showPlusMenu && (
               <div style={{ position: 'absolute', bottom: '100%', left: '16px', background: 'var(--dc-bg-secondary)', padding: '8px', borderRadius: '8px', boxShadow: '0 8px 16px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', zIndex: 50, border: '1px solid var(--dc-bg-tertiary)', marginBottom: '8px' }}>
-                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => alert('사진 업로드 기능은 준비 중입니다.')}>
+                <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
+                  if (textareaRef.current) {
+                    const insertText = '![사진설명](http://사진링크)'
+                    setNewComment((prev) => prev + insertText)
+                    setTimeout(() => {
+                      textareaRef.current?.focus()
+                      textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
+                    }, 0)
+                  }
+                  // 메뉴 닫기
+                  setShowPlusMenu(false)
+                }}>
                   <span style={{ fontSize: 18 }}>🖼️</span>
-                  <span style={{ color: 'var(--dc-text-normal)' }}>사진 카카오톡처럼 업로드</span>
+                  <span style={{ color: 'var(--dc-text-normal)' }}>사진 업로드</span>
                 </div>
                 <div style={{ padding: '10px 12px', fontSize: 14, cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px' }} className="hover-bg-modifier" onClick={() => {
                   if (textareaRef.current) {
@@ -295,6 +306,8 @@ export function CommentSection({
                       textareaRef.current?.setSelectionRange(textareaRef.current.value.length, textareaRef.current.value.length)
                     }, 0)
                   }
+                  // 메뉴 닫기
+                  setShowPlusMenu(false)
                 }}>
                   <span style={{ fontSize: 18 }}>🔗</span>
                   <span style={{ color: 'var(--dc-text-normal)' }}>하이퍼링크 삽입</span>
