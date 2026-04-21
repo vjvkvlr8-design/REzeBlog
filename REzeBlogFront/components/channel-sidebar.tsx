@@ -64,6 +64,17 @@ export function ChannelSidebar() {
   // Mobile menu state
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // Update body class when mobileOpen changes
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.classList.add('mobile-menu-open')
+    } else {
+      document.body.classList.remove('mobile-menu-open')
+    }
+    // Cleanup on unmount
+    return () => document.body.classList.remove('mobile-menu-open')
+  }, [mobileOpen])
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false)
@@ -84,7 +95,7 @@ export function ChannelSidebar() {
     <>
       {/* Mobile menu toggle button */}
       <button
-        className="mobile-menu-toggle"
+        className={`mobile-menu-toggle ${mobileOpen ? 'open' : ''}`}
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label={mobileOpen ? '메뉴 닫기' : '메뉴 열기'}
       >

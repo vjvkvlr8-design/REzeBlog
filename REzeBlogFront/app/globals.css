@@ -745,22 +745,44 @@
 
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
-  .server-sidebar { display: none; }
+  /* Server sidebar - slide in with channel sidebar */
+  .server-sidebar { 
+    display: flex; /* override display: none */
+    position: fixed;
+    left: -72px; /* hide offscreen */
+    top: 0;
+    height: 100%;
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+  
+  body.mobile-menu-open .server-sidebar {
+    left: 0; /* slide in */
+  }
 
   /* Channel sidebar - mobile toggle mode */
   .channel-sidebar {
     position: fixed;
-    left: -240px;
+    left: -312px; /* 240 + 72 */
     top: 0;
-    height: 100vh;
+    height: 100%;
     z-index: 999;
     transition: left 0.3s ease;
     box-shadow: none;
   }
 
-  .channel-sidebar.mobile-open {
-    left: 0;
+  .channel-sidebar.mobile-open,
+  body.mobile-menu-open .channel-sidebar {
+    left: 72px; /* place it next to server sidebar */
     box-shadow: 4px 0 16px rgba(0,0,0,0.5);
+    width: calc(100vw - 72px); /* ensure it doesn't overflow screen on very small devices */
+    max-width: 240px; /* keep desktop size if screen is wide enough */
+  }
+
+  /* Hamburger button open state */
+  .mobile-menu-toggle.open {
+    left: auto;
+    right: 12px; /* Move to the right side so it doesn't block sidebars */
   }
 
   /* Backdrop for mobile sidebar */
