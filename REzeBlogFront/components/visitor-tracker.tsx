@@ -42,12 +42,12 @@ export function VisitorTracker() {
 
     trackVisit()
 
-    // Update duration when leaving page
-    const handleBeforeUnload = () => {
+    // Update duration when leaving page or navigating away via Next.js client router
+    const handleUnloadOrRouteChange = () => {
       const duration = Math.floor((Date.now() - startTime.current) / 1000)
 
-      // Use sendBeacon for reliable data sending on page unload
-      if (navigator.sendBeacon) {
+      // Use sendBeacon for reliable data sending on page unload or route change
+      if (duration > 0 && navigator.sendBeacon) {
         const data = JSON.stringify({
           page: pathname,
           duration,
@@ -56,10 +56,12 @@ export function VisitorTracker() {
       }
     }
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('beforeunload', handleUnloadOrRouteChange)
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      // Run when component unmounts (Next.js route change)
+      handleUnloadOrRouteChange()
+      window.removeEventListener('beforeunload', handleUnloadOrRouteChange)
     }
   }, [pathname])
 

@@ -70,3 +70,42 @@ export async function GET() {
     )
   }
 }
+
+// POST /api/posts - Create a new post (Public access for visitors)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { title, slug, content, channelId } = body
+
+    if (!title || !slug || !content) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Default visitor author identity
+    const author = '방문자' + Math.floor(Math.random() * 1000)
+    const authorColor = '#1abc9c'
+    const avatarBg = 'teal'
+    const avatarLetter = 'V'
+
+    const newPost = await db.insert(posts).values({
+      title,
+      slug,
+      content,
+      channelId: channelId || null,
+      author,
+      authorColor,
+      avatarBg,
+      avatarLetter,
+      published: true, // Auto-publish visitor messages
+      views: 0
+    }).returning()
+
+    return NextResponse.json({ success: true, post: newPost[0] }, { status: 201 })
+  } catch (error) {
+    console.error('Failed to create post:', error)
+    return NextResponse.json(
+      { error: 'Failed to create post' },
+      { status: 500 }
+    )
+  }
+}

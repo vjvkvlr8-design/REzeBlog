@@ -795,7 +795,7 @@ export default function AdminPage() {
                             ✏️ 수정
                           </button>
                           <button 
-                            onClick={() => router.push(`/admin/posts?channel=${ch.slug}`)}
+                            onClick={() => router.push(`/blog?ch=${ch.slug}`)}
                             style={{ background: 'var(--dc-bg-accent)', color: 'var(--dc-text-normal)', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
                           >
                             📝 게시글

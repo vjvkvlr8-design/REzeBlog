@@ -94,7 +94,16 @@ export async function GET() {
 
     // Calculate analytics
     const totalViews = postsData.reduce((sum, p) => sum + (p.views || 0), 0)
-    const avgSessionDuration = totalVisitors > 0 ? Math.floor(totalViews / totalVisitors) : 0
+    
+    // Calculate true average session duration from DB (only from visitors with duration > 0)
+    const durationStats = await db.select({
+      totalDuration: sql<number>`sum(${visitors.duration})`,
+      validCount: sql<number>`count(case when ${visitors.duration} > 0 then 1 end)`
+    }).from(visitors)
+    
+    const totalDuration = Number(durationStats[0]?.totalDuration || 0)
+    const validCount = Number(durationStats[0]?.validCount || 0)
+    const avgSessionDuration = validCount > 0 ? Math.floor(totalDuration / validCount) : 0
 
     // Dynamic Referrers Calculation
     const referrerMap: Record<string, number> = {}
