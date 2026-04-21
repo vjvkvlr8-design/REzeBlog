@@ -27,7 +27,7 @@ export function ServerSidebar() {
   const [dbServers, setDbServers] = useState<ServerIconData[]>([])
 
   useEffect(() => {
-    fetch('/api/admin/servers')
+    fetch('/api/admin/servers', { cache: 'no-store' })
       .then(res => res.ok ? res.json() : [])
       .then(data => setDbServers(data))
       .catch(() => {})

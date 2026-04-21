@@ -26,7 +26,7 @@ export function ThreadPanel() {
   useEffect(() => {
     async function fetchPosts() {
       try {
-        const res = await fetch('/api/posts')
+        const res = await fetch('/api/posts', { cache: 'no-store' })
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
         setThreads(data)

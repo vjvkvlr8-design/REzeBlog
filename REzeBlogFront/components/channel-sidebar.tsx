@@ -8,7 +8,6 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
-import { useEffect, useState } from 'react'
 
 interface Channel {
   slug: string
@@ -33,7 +32,7 @@ export function ChannelSidebar() {
   useEffect(() => {
     async function fetchCategories() {
       try {
-        const res = await fetch('/api/categories')
+        const res = await fetch('/api/categories', { cache: 'no-store' })
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
         // Transform API response to match component interface
