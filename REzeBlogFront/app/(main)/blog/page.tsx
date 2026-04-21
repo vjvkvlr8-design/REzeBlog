@@ -206,7 +206,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                       {post.title}
                     </Link>
                     <div className="message-post-excerpt">
-                      {post.content.split('\n')[0]}
+                      {post.content.replace(/!\[.*?\]\(data:image\/[^;]+;base64,[^\)]+\)/g, '[사진]').split('\n')[0]}
                     </div>
                   </div>
                 </div>
@@ -216,7 +216,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
                   <div className="message">
                     <div className="message-embed" style={{ borderLeftColor: post.authorColor }}>
                       <div className="message-embed-desc" style={{ fontSize: 13 }}>
-                        {post.content.split('\n').slice(2, 4).join(' ')}
+                        {post.content.replace(/!\[.*?\]\(data:image\/[^;]+;base64,[^\)]+\)/g, '[사진]').split('\n').slice(2, 4).join(' ')}
                       </div>
                     </div>
                   </div>

@@ -164,7 +164,7 @@ export function ThreadPanel() {
                 display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
                 overflow: 'hidden', textOverflow: 'ellipsis',
               }}>
-                {thread.excerpt || (thread.content ? thread.content.replace(/<[^>]*>?/gm, '') : '')}
+                {thread.excerpt || (thread.content ? thread.content.replace(/!\[.*?\]\(data:image\/[^;]+;base64,[^\)]+\)/g, '[사진]').replace(/<[^>]*>?/gm, '') : '')}
               </div>
 
               {/* Thread meta */}
