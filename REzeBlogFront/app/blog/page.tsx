@@ -332,11 +332,43 @@ export default async function BlogPage({ searchParams }: PageProps) {
 
       {/* Chat Input */}
       <div className="chat-input-wrapper">
-        <div className="chat-input">
+        <form className="chat-input" action="/api/admin/posts" method="POST" onSubmit={(e) => {
+          e.preventDefault();
+          const input = e.currentTarget.elements.namedItem('content') as HTMLInputElement;
+          const content = input.value;
+          if (!content.trim()) return;
+          
+          fetch('/api/admin/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: content.slice(0, 30) + (content.length > 30 ? '...' : ''),
+              slug: 'chat-' + Math.random().toString(36).substring(2, 9),
+              content: content,
+              channelId: currentChannel?.id || null,
+              published: true
+            })
+          }).then(res => {
+            if(res.ok) {
+              input.value = '';
+              window.location.reload();
+            } else {
+              alert('메시지 전송에 실패했습니다. (관리자 권한이 필요할 수 있습니다.)');
+            }
+          });
+        }}>
           <span className="chat-input-icon">＋</span>
-          <span className="chat-input-placeholder">#일반 에 메시지 보내기</span>
-          <span className="chat-input-icon">😀</span>
-        </div>
+          <input 
+            name="content"
+            type="text" 
+            className="chat-input-placeholder" 
+            placeholder={`#${currentChannel?.name || '일반'} 에 메시지 보내기`}
+            style={{ background: 'transparent', border: 'none', color: 'var(--dc-text-normal)', width: '100%', outline: 'none' }}
+          />
+          <button type="submit" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+            <span className="chat-input-icon">😀</span>
+          </button>
+        </form>
       </div>
     </>
   )

@@ -129,30 +129,25 @@ export default function AdminPage() {
     }
   }
 
-  // 방문자 인사이트 데이터 로커 (가상 연동)
+  // 방문자 인사이트 데이터 조회
   const fetchInsightsData = async () => {
     setInsightsLoading(true)
     setInsightsError('')
     
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 800))
-    
-    setInsightsData({
-      overview: { totalSessions: 14502, humanTraffic: 11200, botTraffic: 3302 },
-      keywords: [
-        { keyword: '디스코드 블로그', count: 324, percentage: 35 },
-        { keyword: 'Next.js 텍스트 방탈출', count: 210, percentage: 22 },
-        { keyword: 'vercel 봇 차단 설정', count: 180, percentage: 19 },
-      ],
-      multiViews: [
-        { pages: 1, users: 4500 },
-        { pages: 2, users: 3200 },
-        { pages: 3, users: 1800 },
-        { pages: 4, users: 500 },
-      ]
-    })
-    
-    setInsightsLoading(false)
+    try {
+      const res = await fetch('/api/admin/visitors')
+      if (res.ok) {
+        const data = await res.json()
+        setInsightsData(data)
+      } else {
+        const err = await res.json()
+        setInsightsError(err.error || '데이터 로드 실패')
+      }
+    } catch {
+      setInsightsError('방문자 인사이트 호출 실패')
+    } finally {
+      setInsightsLoading(false)
+    }
   }
 
   // 카테고리 목록 가져오기
@@ -455,7 +450,7 @@ export default function AdminPage() {
 
   const tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', label: '대시보드', icon: '📊' },
-    { key: 'write', label: '✍️ 글쓰기', icon: '✍️' },
+    { key: 'write', label: '글쓰기', icon: '✍️' },
     { key: 'channels', label: '채널/게시글 관리', icon: '#' },
     { key: 'visitors', label: '방문자 추적', icon: '👥' },
     { key: 'seo', label: 'Google SEO', icon: '🔍' },
@@ -778,7 +773,7 @@ export default function AdminPage() {
                 <tbody>
                   {channels.map((ch: Channel) => (
                     <tr key={ch.id} style={{ borderBottom: '1px solid var(--dc-separator)' }}>
-                      <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--dc-text-muted)' }}>▼ {ch.categoryName || '미분류'}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 14, color: 'var(--dc-text-muted)' }}>{ch.categoryName || '미분류'}</td>
                       <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 600 }}>
                         <span style={{ color: 'var(--dc-channel-icon)', marginRight: 4 }}>#</span>{ch.name}
                       </td>
@@ -1355,7 +1350,7 @@ export default function AdminPage() {
               <option value="">카테고리 없음</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {cat.name.replace('▼ ', '')}
                 </option>
               ))}
             </select>
