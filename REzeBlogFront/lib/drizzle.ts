@@ -7,10 +7,11 @@ const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:543
 
 // Connection for queries
 const client = postgres(connectionString, {
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: 'require',
   max: 10,
   idle_timeout: 20,
   connect_timeout: 10,
+  prepare: false, // REQUIRED for Supabase Transaction Pooler (PgBouncer)
 })
 
 // Drizzle instance with schema
