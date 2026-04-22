@@ -124,6 +124,8 @@ export function PostActions({ postId, slug, initialData }: PostActionsProps) {
           color: var(--dc-interactive-active) !important;
         }
       `}</style>
+
+      {isEditModalOpen && (
         <div className="edit-modal-backdrop" style={{
           position: 'fixed',
           top: 0,
@@ -240,13 +242,6 @@ export function PostActions({ postId, slug, initialData }: PostActionsProps) {
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .post-action-btn:hover {
-          color: var(--dc-interactive-hover) !important;
-          text-decoration: underline;
-        }
-      `}</style>
     </>
   )
 }
