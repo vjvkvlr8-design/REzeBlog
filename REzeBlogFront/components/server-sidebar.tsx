@@ -54,14 +54,17 @@ export function ServerSidebar() {
 
       <div className="server-separator" />
 
-      {/* Game Widget - 🎮 위에 배치 */}
+      {/* Game Widget - 🎮 */}
       <SidebarTooltip text="미니게임 활성화">
         <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 8 }}>
           <GameWidget />
         </div>
       </SidebarTooltip>
+
+      {/* Spacer - pushes AuthWidget to the very bottom like Discord */}
+      <div style={{ flexGrow: 1 }} />
       
-      {/* Auth Widget (User Avatar & Login) - 🎮 아래 배치 */}
+      {/* Auth Widget (User Avatar & Login) - 맨 아래 고정 (Discord 스타일) */}
       <SidebarTooltip text="계정 관리">
         <AuthWidget />
       </SidebarTooltip>

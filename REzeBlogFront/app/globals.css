@@ -59,11 +59,12 @@
   }
 
   html, body {
+    /* 모바일 브라우저 주소창/하단바 짤림 현상의 근본적 해결 */
     height: 100%;
     width: 100%;
-    overflow: hidden;
-    position: fixed;
-    inset: 0;
+    overflow: hidden; /* body 자체의 스크롤 완전 차단 */
+    position: fixed; /* iOS/Android 스크롤 바운스 완벽 차단 */
+    inset: 0; /* top, left, right, bottom: 0 과 동일 (브라우저 크롬 영역 제외한 순수 뷰포트에 꽉 참) */
   }
 
   html {
@@ -105,7 +106,7 @@
 }
 
 @layer components {
-  /* ========== Server Sidebar ========== */
+  /* ========== Server Sidebar (leftmost strip) ========== */
   .server-sidebar {
     width: 72px;
     background: var(--dc-bg-tertiary);
@@ -251,6 +252,7 @@
     opacity: 1;
   }
 
+  /* User area at bottom of channel sidebar */
   .user-area {
     height: 52px;
     padding: 0 8px;
@@ -291,7 +293,7 @@
     line-height: 13px;
   }
 
-  /* ========== Chat Area ========== */
+  /* ========== Chat Area (Main Content) ========== */
   .chat-area {
     flex: 1;
     background: var(--dc-bg-primary);
@@ -340,7 +342,7 @@
     overscroll-behavior-y: contain; 
   }
 
-  /* ========== Message ========== */
+  /* ========== Discord Message ========== */
   .message {
     padding: 2px 16px 2px 72px;
     margin-top: 0;
@@ -374,6 +376,11 @@
     background: var(--dc-brand);
     color: #fff;
   }
+  .message-avatar.green { background: var(--dc-text-positive); }
+  .message-avatar.orange { background: var(--dc-text-warning); }
+  .message-avatar.red { background: var(--dc-text-danger); }
+  .message-avatar.purple { background: #9b59b6; }
+  .message-avatar.teal { background: #1abc9c; }
 
   .message-header {
     display: flex;
@@ -405,7 +412,7 @@
   }
   .message-content a:hover { text-decoration: underline; }
 
-  /* Blog post title */
+  /* Blog post as message - clickable title */
   .message-post-title {
     font-weight: 700;
     font-size: 16px;
@@ -416,7 +423,158 @@
   }
   .message-post-title:hover { text-decoration: underline; }
 
-  /* Chat input */
+  .message-post-excerpt {
+    color: var(--dc-text-normal);
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .message-embed {
+    margin-top: 4px;
+    padding: 8px 16px 8px 12px;
+    border-left: 4px solid var(--dc-brand);
+    background: rgba(47, 49, 54, 0.6);
+    border-radius: 0 4px 4px 0;
+    max-width: 520px;
+  }
+  .message-embed-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--dc-text-link);
+    cursor: pointer;
+    margin-bottom: 4px;
+  }
+  .message-embed-title:hover { text-decoration: underline; }
+  .message-embed-desc {
+    font-size: 14px;
+    color: var(--dc-text-normal);
+    line-height: 1.25;
+  }
+
+  .message-reactions {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .message-reaction {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(79, 84, 92, 0.24);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--dc-text-normal);
+    transition: background-color 0.1s ease;
+  }
+  .message-reaction:hover {
+    background: rgba(79, 84, 92, 0.48);
+    border-color: rgba(79, 84, 92, 0.48);
+  }
+  .message-reaction.reacted {
+    background: rgba(88, 101, 242, 0.15);
+    border-color: var(--dc-brand);
+  }
+
+  /* Reply styling */
+  .message-reply {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    margin-bottom: 2px;
+    padding-left: 0;
+    position: relative;
+  }
+  .message-reply::before {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 10px;
+    width: 33px;
+    height: 12px;
+    border-left: 2px solid var(--dc-interactive-muted);
+    border-top: 2px solid var(--dc-interactive-muted);
+    border-top-left-radius: 6px;
+  }
+  .message-reply-avatar {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--dc-brand);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: #fff;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .message-reply-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--dc-interactive-normal);
+    cursor: pointer;
+  }
+  .message-reply-name:hover { color: var(--dc-interactive-hover); }
+  .message-reply-text {
+    font-size: 13px;
+    color: var(--dc-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .message-reply-text:hover {
+    color: var(--dc-text-normal);
+  }
+
+  /* Date separator */
+  .date-separator {
+    display: flex;
+    align-items: center;
+    margin: 8px 16px;
+    gap: 8px;
+  }
+  .date-separator-line {
+    flex: 1;
+    height: 1px;
+    background: var(--dc-interactive-muted);
+    opacity: 0.48;
+  }
+  .date-separator-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dc-text-muted);
+    white-space: nowrap;
+    padding: 2px 4px;
+  }
+
+  /* Welcome/new channel message */
+  .welcome-message {
+    padding: 16px 16px 0;
+    margin-bottom: 16px;
+  }
+  .welcome-icon {
+    font-size: 68px;
+    margin-bottom: 8px;
+  }
+  .welcome-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--dc-header-primary);
+    margin-bottom: 8px;
+  }
+  .welcome-desc {
+    font-size: 14px;
+    color: var(--dc-header-secondary);
+    max-width: 520px;
+  }
+
+  /* Chat input bar */
   .chat-input-wrapper {
     padding: 0 16px calc(24px + env(safe-area-inset-bottom));
     flex-shrink: 0;
@@ -443,7 +601,7 @@
     color: var(--dc-interactive-hover);
   }
 
-  /* ========== Game Widget ========== */
+  /* ========== Game Widget (Floating Popup) ========== */
   .game-widget {
     position: fixed;
     z-index: 1000;
@@ -468,6 +626,7 @@
     cursor: grab;
     user-select: none;
   }
+  .game-widget-header:active { cursor: grabbing; }
   .game-widget-title {
     font-size: 13px;
     font-weight: 700;
@@ -513,6 +672,49 @@
     box-shadow: var(--dc-elevation-high);
     transition: background-color 0.15s ease, transform 0.15s ease, border-radius 0.15s ease;
   }
+  .game-widget-toggle:hover {
+    background: #c38415;
+    border-radius: 16px;
+    transform: scale(1.05);
+  }
+
+  /* Game choice buttons */
+  .game-choice {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--dc-interactive-muted);
+    background: transparent;
+    color: var(--dc-text-normal);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+    margin-bottom: 6px;
+  }
+  .game-choice:hover {
+    background: var(--dc-bg-modifier-hover);
+    border-color: var(--dc-brand);
+  }
+  .game-choice:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Badge / mention */
+  .badge {
+    padding: 0 4px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background: var(--dc-text-danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* ========== Mobile Toggle Button ========== */
@@ -536,39 +738,96 @@
   transition: transform 0.2s, background 0.2s;
 }
 
+.mobile-menu-toggle:hover {
+  background: var(--dc-brand-hover);
+  transform: scale(1.05);
+}
+
 /* ========== Responsive ========== */
 @media (max-width: 768px) {
+  /* Server sidebar - slide in with channel sidebar */
   .server-sidebar { 
+    display: flex; /* override display: none */
     position: fixed;
-    left: -72px;
+    left: -72px; /* hide offscreen */
     top: 0;
     height: 100%;
     z-index: 1000;
     transition: left 0.3s ease;
   }
-  body.mobile-menu-open .server-sidebar { left: 0; }
+  
+  body.mobile-menu-open .server-sidebar {
+    left: 0; /* slide in */
+  }
 
+  /* Channel sidebar - mobile toggle mode */
   .channel-sidebar {
     position: fixed;
-    left: -312px;
+    left: -312px; /* 240 + 72 */
     top: 0;
     height: 100%;
     z-index: 999;
     transition: left 0.3s ease;
+    box-shadow: none;
   }
+
+  .channel-sidebar.mobile-open,
   body.mobile-menu-open .channel-sidebar {
-    left: 72px;
-    width: calc(100vw - 72px);
-    max-width: 240px;
+    left: 72px; /* place it next to server sidebar */
+    box-shadow: 4px 0 16px rgba(0,0,0,0.5);
+    width: calc(100vw - 72px); /* ensure it doesn't overflow screen on very small devices */
+    max-width: 240px; /* keep desktop size if screen is wide enough */
+  }
+
+  /* Hamburger button open state */
+  .mobile-menu-toggle.open {
+    left: auto;
+    right: 12px; /* Move to the right side so it doesn't block sidebars */
+  }
+
+  /* Backdrop for mobile sidebar */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+  }
+
+  .sidebar-backdrop.visible {
+    display: block;
   }
 
   .mobile-menu-toggle {
     display: flex;
   }
-  .chat-area { width: 100vw; }
+
+  /* Chat area - full width on mobile */
+  .chat-area {
+    width: 100vw;
+  }
+
+
+  /* Game widget - smaller on mobile */
+  .game-widget {
+    width: 280px !important;
+    height: 340px !important;
+  }
 }
 
-/* Sidebar Tooltip Styles (Fixed Layer) */
+/* ========== Animations ========== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadein {
+  animation: fadeIn 0.15s ease-out;
+}
+
+/* ========== Sidebar Tooltip (Fixed Layer - Independent of sidebar layout) ========== */
 .sidebar-tooltip {
   position: fixed;
   background: var(--dc-bg-floating);
@@ -599,13 +858,4 @@
 @keyframes tooltipFadeIn {
   from { opacity: 0; transform: translateY(-50%) translateX(-8px); }
   to { opacity: 1; transform: translateY(-50%) translateX(0); }
-}
-
-/* ========== Animations ========== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadein {
-  animation: fadeIn 0.15s ease-out;
 }
