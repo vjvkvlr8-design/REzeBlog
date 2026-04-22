@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { MarkdownEditor } from './admin/markdown-editor'
 
 export function PostDeleteButton({ postId, postAuthor }: { postId: number; postAuthor: string }) {
   const router = useRouter()
@@ -13,6 +14,8 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [editContent, setEditContent] = useState('')
   const [editTitle, setEditTitle] = useState('')
+  const [editTags, setEditTags] = useState('')
+  const [editExcerpt, setEditExcerpt] = useState('')
   const [editPassword, setEditPassword] = useState('')
   const [editAttachments, setEditAttachments] = useState<{id: string, data: string}[]>([])
 
@@ -78,6 +81,7 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
             const { newText, attachments } = extractImages(post.content)
             setEditAttachments(attachments)
             setEditTitle(post.title)
+            setEditExcerpt(post.excerpt || '')
             setEditContent(newText)
             setEditModalOpen(true)
           }
@@ -94,6 +98,7 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
             const { newText, attachments } = extractImages(post.content)
             setEditAttachments(attachments)
             setEditTitle(post.title)
+            setEditExcerpt(post.excerpt || '')
             setEditContent(newText)
             setEditModalOpen(true)
           }
@@ -117,6 +122,7 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
         body: JSON.stringify({
           id: postId,
           title: editTitle,
+          excerpt: editExcerpt,
           content: finalContent,
           password: editPassword
         })
@@ -193,30 +199,81 @@ export function PostDeleteButton({ postId, postAuthor }: { postId: number; postA
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: 'var(--dc-bg-secondary)', padding: '24px', borderRadius: '8px',
-            width: '800px', maxWidth: '90%', color: 'var(--dc-text-normal)', display: 'flex', flexDirection: 'column', gap: '16px'
+            background: 'var(--dc-bg-primary)', padding: '24px', borderRadius: '8px',
+            width: '900px', maxWidth: '95%', maxHeight: '90vh', color: 'var(--dc-text-normal)', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#fff' }}>게시글 수정</h3>
+              <h3 style={{ margin: 0, color: 'var(--dc-header-primary)', fontSize: '20px' }}>게시글 수정</h3>
               <button onClick={() => setEditModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--dc-text-muted)', cursor: 'pointer', fontSize: '24px' }}>&times;</button>
             </div>
             
-            <input
-              type="text"
-              value={editTitle}
-              onChange={e => setEditTitle(e.target.value)}
-              placeholder="제목"
-              style={{ width: '100%', padding: '12px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '16px' }}
-            />
+            {editAttachments.length > 0 && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '8px', borderBottom: '1px solid var(--dc-bg-tertiary)' }}>
+                {editAttachments.map((att) => (
+                  <div key={att.id} style={{ position: 'relative', width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--dc-interactive-muted)' }}>
+                    <img src={att.data} alt="attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button
+                      type="button"
+                      onClick={() => setEditAttachments(prev => prev.filter(a => a.id !== att.id))}
+                      style={{
+                        position: 'absolute', top: 2, right: 2, width: 16, height: 16,
+                        borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', fontSize: 10
+                      }}
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-            <textarea
-              value={editContent}
-              onChange={e => setEditContent(e.target.value)}
-              placeholder="본문 (마크다운 지원)"
-              style={{ width: '100%', height: '300px', padding: '12px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: '#fff', resize: 'vertical', fontFamily: 'inherit' }}
-            />
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 4 }}>제목</label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                placeholder="제목"
+                style={{ width: '100%', padding: '10px 12px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: 'var(--dc-text-normal)', fontSize: '15px', outline: 'none' }}
+              />
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 4 }}>태그 (쉼표로 구분)</label>
+              <input
+                type="text"
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                placeholder="예: REze블로그, 여고생입니다"
+                style={{ width: '100%', padding: '10px 12px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: 'var(--dc-text-normal)', fontSize: '14px', outline: 'none' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 4 }}>요약 (미입력시 자동 생성)</label>
+              <input
+                type="text"
+                value={editExcerpt}
+                onChange={(e) => setEditExcerpt(e.target.value)}
+                placeholder="글의 간단한 요약을 입력하세요"
+                style={{ width: '100%', padding: '10px 12px', background: 'var(--dc-bg-tertiary)', border: 'none', borderRadius: '4px', color: 'var(--dc-text-normal)', fontSize: '14px', outline: 'none' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--dc-text-muted)', marginBottom: 4 }}>본문</label>
+              <div style={{ borderRadius: '8px', border: '1px solid var(--dc-bg-tertiary)', overflow: 'hidden' }}>
+                <MarkdownEditor
+                  value={editContent}
+                  onChange={setEditContent}
+                  attachments={editAttachments}
+                  setAttachments={setEditAttachments}
+                  minHeight={250}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 8 }}>
               <div>
                 {userLevel === 4 && (
                   <input 

@@ -42,6 +42,7 @@ export async function GET() {
         channelId: posts.channelId,
         views: posts.views,
         published: posts.published,
+        tags: posts.tags,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         channelName: channels.name,
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
       avatarLetter,
       channelId,
       published,
+      tags,
     } = body
 
     if (!title || !slug || !content) {
@@ -101,6 +103,7 @@ export async function POST(request: NextRequest) {
         avatarLetter: avatarLetter || 'A',
         channelId: channelId || null,
         published: published !== undefined ? published : true,
+        tags: tags || null,
       })
       .returning()
 
@@ -131,6 +134,7 @@ export async function PUT(request: NextRequest) {
       avatarLetter,
       channelId,
       published,
+      tags,
     } = body
 
     if (!id) {
@@ -162,6 +166,7 @@ export async function PUT(request: NextRequest) {
     if (avatarLetter) updateData.avatarLetter = avatarLetter
     if (channelId !== undefined) updateData.channelId = channelId
     if (published !== undefined) updateData.published = published
+    if (tags !== undefined) updateData.tags = tags
 
     const result = await db.update(posts).set(updateData).where(eq(posts.id, id)).returning()
 

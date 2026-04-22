@@ -8,6 +8,7 @@ import { db } from '@/lib/drizzle'
 import { posts, comments, reactions, channels } from '@/db/schema'
 import { asc, eq, and, inArray } from 'drizzle-orm'
 import { ChannelChatInput } from '@/components/channel-chat-input'
+import { PostActions } from '@/components/post-actions'
 
 import { redirect } from 'next/navigation'
 
@@ -84,6 +85,8 @@ async function getPosts(channelSlug?: string, categoryName?: string) {
       slug: post.slug,
       title: post.title,
       content: post.content,
+      excerpt: post.excerpt || '',
+      tags: post.tags || '',
       author: post.author,
       authorColor: post.authorColor,
       avatarBg: post.avatarBg,
@@ -133,6 +136,8 @@ interface FormattedPost {
   avatarLetter: string
   date: string
   time: string
+  excerpt: string
+  tags: string
   reactions: Reaction[]
   replies: Reply[]
 }
@@ -212,6 +217,16 @@ export default async function BlogPage({ searchParams }: PageProps) {
                   <div className="message-header">
                     <span className="message-username" style={{ color: post.authorColor }}>{post.author}</span>
                     <span className="message-timestamp">{post.time}</span>
+                    <PostActions 
+                      postId={post.id} 
+                      slug={post.slug}
+                      initialData={{
+                        title: post.title,
+                        content: post.content,
+                        tags: post.tags,
+                        summary: post.excerpt
+                      }}
+                    />
                   </div>
                   <div className="message-content">
                     <Link href={`/blog/${post.slug}`} className="message-post-title">

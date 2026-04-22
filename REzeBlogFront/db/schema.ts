@@ -68,6 +68,7 @@ export const posts = pgTable('posts', {
   authorIp: varchar('author_ip', { length: 45 }),
   authorPassword: varchar('author_password', { length: 255 }), // 비회원 삭제용 비밀번호
   channelId: integer('channel_id').references(() => channels.id, { onDelete: 'cascade' }),
+  tags: text('tags'),
   views: integer('views').default(0).notNull(),
   published: boolean('published').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

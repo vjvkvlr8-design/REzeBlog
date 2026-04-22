@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AuthWidget } from './auth-widget'
 import { GameWidget } from './game-widget'
+import { SidebarTooltip } from './sidebar-tooltip'
 
 interface ServerIconData {
   id: number
@@ -21,7 +22,6 @@ interface ServerIconData {
 export function ServerSidebar() {
   const pathname = usePathname()
   const [dbServers, setDbServers] = useState<ServerIconData[]>([])
-  const [hoveredServer, setHoveredServer] = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/servers', { cache: 'no-store' })
@@ -34,12 +34,7 @@ export function ServerSidebar() {
     <div className="server-sidebar">
       {/* Category servers from DB */}
       {dbServers.map((s) => (
-        <div 
-          key={s.id} 
-          style={{ position: 'relative' }}
-          onMouseEnter={() => setHoveredServer(s.id)}
-          onMouseLeave={() => setHoveredServer(null)}
-        >
+        <SidebarTooltip key={s.id} text={s.name}>
           <Link
             href={s.linkUrl}
             className={`server-icon ${pathname === s.linkUrl ? 'active' : ''}`}
@@ -54,51 +49,22 @@ export function ServerSidebar() {
               </div>
             )}
           </Link>
-          
-          {hoveredServer === s.id && (
-            <div style={{
-              position: 'absolute',
-              left: '70px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'var(--dc-bg-floating)',
-              color: 'var(--dc-text-normal)',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              boxShadow: 'var(--dc-elevation-high)',
-              zIndex: 100,
-              pointerEvents: 'none'
-            }}>
-              {s.name}
-              {/* Tooltip triangle */}
-              <div style={{
-                position: 'absolute',
-                left: '-4px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: 0,
-                height: 0,
-                borderTop: '4px solid transparent',
-                borderBottom: '4px solid transparent',
-                borderRight: '4px solid var(--dc-bg-floating)'
-              }} />
-            </div>
-          )}
-        </div>
+        </SidebarTooltip>
       ))}
 
       <div className="server-separator" />
 
       {/* Game Widget - 🎮 위에 배치 */}
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 8 }}>
-        <GameWidget />
-      </div>
+      <SidebarTooltip text="미니게임 활성화">
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: 8 }}>
+          <GameWidget />
+        </div>
+      </SidebarTooltip>
       
       {/* Auth Widget (User Avatar & Login) - 🎮 아래 배치 */}
-      <AuthWidget />
+      <SidebarTooltip text="계정 관리">
+        <AuthWidget />
+      </SidebarTooltip>
     </div>
   )
 }

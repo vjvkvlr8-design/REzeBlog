@@ -8,6 +8,8 @@ interface MarkdownEditorProps {
   onChange: (value: string) => void
   placeholder?: string
   minHeight?: number
+  attachments?: {id: string, data: string}[]
+  setAttachments?: React.Dispatch<React.SetStateAction<{id: string, data: string}[]>>
 }
 
 export function MarkdownEditor({
@@ -15,6 +17,8 @@ export function MarkdownEditor({
   onChange,
   placeholder = '마크다운으로 글을 작성하세요...',
   minHeight = 400,
+  attachments,
+  setAttachments
 }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -96,11 +100,33 @@ export function MarkdownEditor({
       return
     }
 
-    // 이미지를 Base64로 변환
     const reader = new FileReader()
     reader.onload = (e) => {
-      const base64 = e.target?.result as string
-      insertText(`![${file.name}](${base64})`)
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        const MAX_DIM = 800
+        if (width > height && width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM }
+        else if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM }
+        
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        const base64 = canvas.toDataURL('image/jpeg', 0.6)
+        
+        if (setAttachments) {
+          const imgId = Math.random().toString(36).substr(2, 6)
+          setAttachments(prev => [...prev, { id: imgId, data: base64 }])
+          insertText(`\n[사진: ${imgId}]\n`)
+        } else {
+          // Fallback if setAttachments isn't provided (e.g. existing admin usage)
+          insertText(`![${file.name}](${base64})`)
+        }
+      }
+      img.src = e.target?.result as string
     }
     reader.readAsDataURL(file)
   }

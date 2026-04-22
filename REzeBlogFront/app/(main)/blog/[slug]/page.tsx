@@ -172,11 +172,9 @@ export default async function PostPage({ params }: Props) {
         {/* Original post */}
         <div className="message message-first">
           <div className={`message-avatar ${post.avatarBg}`}>{post.avatarLetter}</div>
-          <div className="message-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <span className="message-username" style={{ color: post.authorColor }}>{post.author}</span>
-              <span className="message-timestamp">{post.date} {post.time}</span>
-            </div>
+          <div className="message-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="message-username" style={{ color: post.authorColor }}>{post.author}</span>
+            <span className="message-timestamp">{post.date} {post.time}</span>
             <PostDeleteButton postId={post.id} postAuthor={post.author} />
           </div>
           <div className="message-content">

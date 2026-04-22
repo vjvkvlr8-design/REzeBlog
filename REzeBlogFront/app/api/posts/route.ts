@@ -81,7 +81,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { title, slug, content, channelId, authorNickname, authorPassword, isAuth } = body
+    const { title, slug, excerpt, content, channelId, authorNickname, authorPassword, isAuth } = body
 
     if (!title || !slug || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -111,6 +111,7 @@ export async function POST(request: Request) {
       title,
       slug,
       content,
+      excerpt,
       channelId: channelId || null,
       author,
       authorColor,
@@ -197,7 +198,7 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { id, title, content, password } = body
+    const { id, title, content, excerpt, password } = body
 
     if (!id || !title || !content) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -245,7 +246,7 @@ export async function PUT(request: Request) {
 
     // Update post
     await db.update(posts)
-      .set({ title, content, updatedAt: new Date() })
+      .set({ title, content, excerpt, updatedAt: new Date() })
       .where(eq(posts.id, parseInt(id)))
     
     return NextResponse.json({ success: true }, { status: 200 })
